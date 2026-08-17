@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Whack My Boss</title>
+  <style>
+    :root {
+      --ink: #070912;
+      --panel: #101522;
+      --cream: #fff4d6;
+      --red: #ff3b4f;
+      --green: #43e88e;
+      --yellow: #ffd75a;
+      --blue: #6377ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--ink);
+      color: var(--cream);
+      font-family: "Courier New", Courier, monospace;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 12px;
+      background:
+        radial-gradient(circle at 18% 16%, rgba(99, 119, 255, .17), transparent 28%),
+        radial-gradient(circle at 85% 80%, rgba(255, 59, 79, .11), transparent 30%),
+        #070912;
+    }
+
+    .game-shell {
+      position: relative;
+      width: min(96vw, calc(94vh * 4 / 3));
+      aspect-ratio: 4 / 3;
+      max-height: 94vh;
+      border: 3px solid #303950;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #0c101a;
+      box-shadow: 0 24px 80px #000a, 0 0 0 7px #0a0d15;
+      cursor: none;
+      user-select: none;
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(5, 7, 13, .75);
+      backdrop-filter: blur(4px);
+      transition: opacity .18s ease;
+    }
+
+    .overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .overlay:not(.hidden) { cursor: default; }
+
+    .overlay:not(.hidden) button { cursor: pointer; }
+
+    .card {
+      position: relative;
+      width: min(540px, 90%);
+      padding: clamp(24px, 5vw, 42px);
+      text-align: center;
+      background: #111827;
+      border: 4px solid var(--cream);
+      box-shadow: 10px 10px 0 #000, inset 0 0 0 4px #273149;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--yellow);
+      font-weight: 900;
+      letter-spacing: .18em;
+      font-size: clamp(12px, 1.8vw, 16px);
+    }
+
+    h1, h2 {
+      margin: 0;
+      font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      line-height: .92;
+      text-shadow: 4px 4px 0 #000;
+    }
+
+    h1 { font-size: clamp(44px, 9vw, 86px); color: var(--red); }
+    h2 { font-size: clamp(42px, 7vw, 72px); color: var(--yellow); }
+
+    .subtitle {
+      max-width: 430px;
+      margin: 18px auto 24px;
+      color: #aeb9d1;
+      font-size: clamp(12px, 2vw, 16px);
+      line-height: 1.55;
+    }
+
+    button {
+      min-width: 210px;
+      padding: 15px 25px;
+      border: 0;
+      color: #12131b;
+      background: var(--green);
+      box-shadow: 5px 5px 0 #000;
+      font: 900 18px/1 "Courier New", monospace;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      cursor: none;
+      transition: transform .08s, box-shadow .08s, filter .15s;
+    }
+
+    button:hover { filter: brightness(1.12); }
+    button:active { transform: translate(4px, 4px); box-shadow: 1px 1px 0 #000; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 22px 0 10px;
+    }
+
+    .stat {
+      padding: 12px 8px;
+      background: #090d16;
+      border: 2px solid #303950;
+      color: #9ba9c6;
+      font-size: 12px;
+      letter-spacing: .08em;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--cream);
+      font-size: clamp(21px, 4vw, 30px);
+    }
+
+    .rank {
+      margin: 14px 0 22px;
+      color: var(--green);
+      font-size: clamp(15px, 2.8vw, 21px);
+      font-weight: 900;
+    }
+
+    .new-high {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 7px 10px;
+      color: #151515;
+      background: var(--yellow);
+      font-weight: 900;
+      animation: pulse .7s steps(2, end) infinite;
+    }
+
+    .hidden-line { display: none; }
+
+    @keyframes pulse { 50% { transform: scale(1.06) rotate(-1deg); } }
+
+    @media (max-height: 620px) {
+      body { padding: 4px; }
+      .game-shell { max-height: 98vh; }
+      .card { padding: 18px 26px; }
+      .subtitle { margin: 10px auto 14px; }
+      .stats { margin-top: 12px; }
+      .rank { margin: 8px 0 14px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell" id="gameShell" aria-label="Whack My Boss game">
+    <canvas id="game" width="960" height="720"></canvas>
+
+    <section class="overlay" id="startOverlay">
+      <div class="card">
+        <p class="eyebrow">CORPORATE STRESS RELIEF</p>
+        <h1>WHACK<br>MY BOSS</h1>
+        <p class="subtitle">Whack the boss. Chase green perks. Avoid red corporate nightmares. You have 30 seconds.</p>
+        <button id="startButton" type="button">Clock In &amp; Play</button>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="endOverlay">
+      <div class="card">
+        <p class="eyebrow">SHIFT COMPLETE</p>
+        <h2>TIME'S UP!</h2>
+        <div class="stats">
+          <div class="stat">FINAL SCORE<strong id="finalScore">0</strong></div>
+          <div class="stat">ALL-TIME HIGH<strong id="highScore">0</strong></div>
+        </div>
+        <div class="new-high hidden-line" id="newHigh">NEW HIGH SCORE!</div>
+        <p class="rank" id="rankText">Unpaid Intern 🧹</p>
+        <button id="playAgainButton" type="button">Play Again</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const canvas = document.getElementById('game');
+      const ctx = canvas.getContext('2d');
+      const shell = document.getElementById('gameShell');
+      const startOverlay = document.getElementById('startOverlay');
+      const endOverlay = document.getElementById('endOverlay');
+      const startButton = document.getElementById('startButton');
+      const playAgainButton = document.getElementById('playAgainButton');
+      const finalScoreEl = document.getElementById('finalScore');
+      const highScoreEl = document.getElementById('highScore');
+      const newHighEl = document.getElementById('newHigh');
+      const rankTextEl = document.getElementById('rankText');
+      ctx.imageSmoothingEnabled = false;
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const GAME_TIME = 30;
+      const BOSS_UP_TIME = 1000;
+      const STATE = Object.freeze({ IDLE: 'IDLE', PLAYING: 'PLAYING', GAMEOVER: 'GAMEOVER' });
+
+      const redLines = [
+        'OVERTIME TONIGHT!',
+        'PER MY PREVIOUS EMAIL...',
+        'QUICK SYNC AT 5PM?',
+        'NO VACATION THIS MONTH!'
+      ];
+      const greenLines = [
+        'VACATION APPROVED!',
+        'BONUS FOR EVERYONE!',
+        'LOG OFF EARLY TODAY!',
+        'SALARY RAISE APPROVED!'
+      ];
+
+      const cubicles = Array.from({ length: 9 }, (_, i) => ({
+        x: 130 + (i % 3) * 285,
+        y: 220 + Math.floor(i / 3) * 175,
+        w: 210,
+        h: 112
+      }));
+
+      let state = STATE.IDLE;
+      let score = 0;
+      let timeLeft = GAME_TIME;
+      let gameStartedAt = 0;
+      let nextSpawnAt = 0;
+      let boss = null;
+      let particles = [];
+      let floaters = [];
+      let shakeUntil = 0;
+      let lastFrame = performance.now();
+      let audioCtx = null;
+      let mouse = { x: W * .72, y: H * .12, visible: false, downUntil: 0 };
+
+      const getHighScore = () => {
+        try { return Number.parseInt(localStorage.getItem('whackMyBossHighScore') || '0', 10) || 0; }
+        catch (_) { return 0; }
+      };
+
+      const saveHighScore = value => {
+        try { localStorage.setItem('whackMyBossHighScore', String(value)); }
+        catch (_) { /* Private browsing/storage denial should not block gameplay. */ }
+      };
+
+      const ensureAudio = () => {
+        try {
+          const AudioCtor = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtor) return;
+          if (!audioCtx) audioCtx = new AudioCtor();
+          if (audioCtx.state === 'suspended') audioCtx.resume();
+        } catch (_) { audioCtx = null; }
+      };
+
+      const tone = (frequency, duration, type = 'square', volume = .06, slide = 0) => {
+        if (!audioCtx) return;
+        const now = audioCtx.currentTime;
+        const oscillator = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, now);
+        oscillator.frequency.linearRampToValueAtTime(Math.max(30, frequency + slide), now + duration);
+        gain.gain.setValueAtTime(volume, now);
+        gain.gain.exponentialRampToValueAtTime(.001, now + duration);
+        oscillator.connect(gain).connect(audioCtx.destination);
+        oscillator.start(now);
+        oscillator.stop(now + duration);
+      };
+
+      const playHitSound = type => {
+        tone(type === 'green' ? 520 : type === 'red' ? 110 : 210, .09, 'square', .07, type === 'green' ? 180 : -50);
+        setTimeout(() => tone(type === 'green' ? 780 : type === 'red' ? 70 : 145, .11, 'square', .045, 0), 55);
+      };
+
+      const getPointer = event => {
+        const rect = canvas.getBoundingClientRect();
+        const source = event.touches?.[0] || event.changedTouches?.[0] || event;
+        return {
+          x: (source.clientX - rect.left) * (W / rect.width),
+          y: (source.clientY - rect.top) * (H / rect.height)
+        };
+      };
+
+      const spawnBoss = now => {
+        const roll = Math.random();
+        const type = roll < .6 ? 'normal' : roll < .8 ? 'red' : 'green';
+        const cell = cubicles[Math.floor(Math.random() * cubicles.length)];
+        const lines = type === 'red' ? redLines : greenLines;
+        boss = {
+          cell,
+          type,
+          text: type === 'normal' ? '' : lines[Math.floor(Math.random() * lines.length)],
+          spawnedAt: now,
+          expiresAt: now + BOSS_UP_TIME,
+          hit: false
+        };
+        nextSpawnAt = now + 1000 + Math.random() * 200;
+      };
+
+      const bossProgress = (now, currentBoss = boss) => {
+        if (!currentBoss) return 0;
+        const age = now - currentBoss.spawnedAt;
+        const remaining = currentBoss.expiresAt - now;
+        return Math.max(0, Math.min(1, Math.min(age / 120, remaining / 130)));
+      };
+
+      const bossHitbox = now => {
+        if (!boss) return null;
+        const p = bossProgress(now);
+        const cx = boss.cell.x + boss.cell.w / 2;
+        const bottom = boss.cell.y + 59;
+        return { x: cx - 49, y: bottom - 103 * p, w: 98, h: 103 * p };
+      };
+
+      const addBurst = (x, y, color) => {
+        for (let i = 0; i < 14; i++) {
+          const angle = Math.PI * 2 * i / 14 + Math.random() * .2;
+          const speed = 100 + Math.random() * 220;
+          particles.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: .52, max: .52, color });
+        }
+      };
+
+      const whack = (x, y, now) => {
+        if (state !== STATE.PLAYING || !boss || boss.hit) return;
+        const hitbox = bossHitbox(now);
+        if (!hitbox || x < hitbox.x || x > hitbox.x + hitbox.w || y < hitbox.y || y > hitbox.y + hitbox.h) return;
+
+        boss.hit = true;
+        const data = boss.type === 'green'
+          ? { amount: 300, text: '+300 BONUS!', color: '#43e88e' }
+          : boss.type === 'red'
+            ? { amount: -200, text: '-200 PENALTY!', color: '#ff3b4f' }
+            : { amount: 100, text: '+100', color: '#fff4d6' };
+
+        score += data.amount;
+        floaters.push({ x, y: y - 10, text: data.text, color: data.color, life: .82, max: .82 });
+        addBurst(x, y, data.color);
+        playHitSound(boss.type);
+        if (boss.type === 'red') shakeUntil = now + 200;
+        boss.expiresAt = Math.min(boss.expiresAt, now + 90);
+      };
+
+      const startGame = () => {
+        ensureAudio();
+        state = STATE.PLAYING;
+        score = 0;
+        timeLeft = GAME_TIME;
+        boss = null;
+        particles = [];
+        floaters = [];
+        shakeUntil = 0;
+        gameStartedAt = performance.now();
+        nextSpawnAt = gameStartedAt + 420;
+        startOverlay.classList.add('hidden');
+        endOverlay.classList.add('hidden');
+      };
+
+      const finishGame = () => {
+        if (state !== STATE.PLAYING) return;
+        state = STATE.GAMEOVER;
+        boss = null;
+        timeLeft = 0;
+        const oldHigh = getHighScore();
+        const isNewHigh = score > oldHigh;
+        const high = Math.max(score, oldHigh);
+        if (isNewHigh) saveHighScore(score);
+        finalScoreEl.textContent = score.toLocaleString();
+        highScoreEl.textContent = high.toLocaleString();
+        newHighEl.classList.toggle('hidden-line', !isNewHigh);
+        rankTextEl.textContent = score > 2000
+          ? 'CEO Destroyer 👑'
+          : score >= 1000
+            ? 'Employee of the Month ⭐️'
+            : score >= 0
+              ? 'Unpaid Intern 🧹'
+              : 'Promoted to Customer 💀';
+        endOverlay.classList.remove('hidden');
+        tone(180, .18, 'sawtooth', .05, -100);
+        setTimeout(() => tone(90, .34, 'square', .04, -30), 130);
+      };
+
+      const update = (now, dt) => {
+        if (state === STATE.PLAYING) {
+          timeLeft = Math.max(0, GAME_TIME - (now - gameStartedAt) / 1000);
+          if (timeLeft <= 0) finishGame();
+          else {
+            if (boss && now >= boss.expiresAt) boss = null;
+            if (!boss && now >= nextSpawnAt) spawnBoss(now);
+          }
+        }
+
+        particles.forEach(p => {
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vy += 500 * dt;
+          p.life -= dt;
+        });
+        particles = particles.filter(p => p.life > 0);
+
+        floaters.forEach(f => { f.y -= 55 * dt; f.life -= dt; });
+        floaters = floaters.filter(f => f.life > 0);
+      };
+
+      const rect = (x, y, w, h, color) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+      };
+
+      const text = (value, x, y, size, color, align = 'left', weight = 900) => {
+        ctx.save();
+        ctx.font = `${weight} ${size}px "Courier New", monospace`;
+        ctx.textAlign = align;
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#05070c';
+        ctx.fillText(value, x + 3, y + 3);
+        ctx.fillStyle = color;
+        ctx.fillText(value, x, y);
+        ctx.restore();
+      };
+
+      const drawBackground = () => {
+        const gradient = ctx.createLinearGradient(0, 0, 0, H);
+        gradient.addColorStop(0, '#151c2d');
+        gradient.addColorStop(1, '#080b13');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.strokeStyle = '#20283a';
+        ctx.lineWidth = 1;
+        for (let x = -H; x < W; x += 40) {
+          ctx.beginPath(); ctx.moveTo(x, H); ctx.lineTo(x + H, 0); ctx.stroke();
+        }
+        for (let x = 0; x < W + H; x += 40) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x - H, H); ctx.stroke();
+        }
+
+        rect(0, 0, W, 112, '#090d17');
+        rect(0, 108, W, 4, '#303950');
+        rect(30, 22, 12, 66, '#ff3b4f');
+        text('WHACK MY BOSS', 58, 50, 28, '#fff4d6');
+        text('CORPORATE REHABILITATION UNIT', 59, 79, 11, '#6f7d9a', 'left', 700);
+
+        rect(389, 24, 182, 64, '#111827');
+        rect(389, 24, 182, 4, '#303950');
+        text('TIME LEFT', 480, 40, 11, '#8e9bb7', 'center', 700);
+        const danger = state === STATE.PLAYING && timeLeft <= 5;
+        text(`${Math.ceil(timeLeft).toString().padStart(2, '0')} SEC`, 480, 68, 27, danger ? '#ff3b4f' : '#ffd75a', 'center');
+
+        rect(700, 24, 225, 64, '#111827');
+        rect(700, 24, 225, 4, '#303950');
+        text('SCORE', 720, 43, 11, '#8e9bb7', 'left', 700);
+        text(score.toLocaleString().padStart(5, '0'), 906, 67, 27, '#43e88e', 'right');
+      };
+
+      const drawCubicleBack = cell => {
+        rect(cell.x - 8, cell.y - 8, cell.w + 16, cell.h, '#060910');
+        rect(cell.x, cell.y, cell.w, cell.h, '#263047');
+        rect(cell.x + 5, cell.y + 5, cell.w - 10, cell.h - 10, '#35415b');
+        rect(cell.x + 12, cell.y + 13, cell.w - 24, cell.h - 24, '#121827');
+        rect(cell.x + 20, cell.y + 22, 72, 48, '#0a0e18');
+        rect(cell.x + 26, cell.y + 27, 60, 34, '#24334c');
+        rect(cell.x + 32, cell.y + 32, 33, 4, '#6377ff');
+        rect(cell.x + 32, cell.y + 41, 44, 3, '#465675');
+        rect(cell.x + 32, cell.y + 49, 26, 3, '#465675');
+        rect(cell.x + 103, cell.y + 28, 29, 34, '#f2d6a8');
+        rect(cell.x + 108, cell.y + 36, 19, 3, '#ff3b4f');
+        rect(cell.x + 108, cell.y + 45, 14, 3, '#6377ff');
+        rect(cell.x + 108, cell.y + 54, 17, 3, '#43e88e');
+        rect(cell.x + 152, cell.y + 41, 20, 28, '#382a29');
+        rect(cell.x + 156, cell.y + 32, 12, 12, '#43e88e');
+      };
+
+      const drawBoss = (currentBoss, now) => {
+        const p = bossProgress(now, currentBoss);
+        if (p <= 0) return;
+        const cell = currentBoss.cell;
+        const cx = cell.x + cell.w / 2;
+        const bottom = cell.y + 92;
+        const rise = 106 * p;
+        const y = bottom - rise;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(cell.x + 7, cell.y - 76, cell.w - 14, 168);
+        ctx.clip();
+
+        rect(cx - 43, y + 69, 86, 58, '#1d2436');
+        rect(cx - 50, y + 79, 14, 49, '#222c43');
+        rect(cx + 36, y + 79, 14, 49, '#222c43');
+        rect(cx - 24, y + 71, 48, 32, '#fff4d6');
+        rect(cx - 6, y + 75, 12, 38, '#ff3b4f');
+
+        rect(cx - 39, y + 19, 78, 62, '#d99a71');
+        rect(cx - 34, y + 8, 68, 21, '#432d31');
+        rect(cx - 43, y + 26, 10, 29, '#b87558');
+        rect(cx + 33, y + 26, 10, 29, '#b87558');
+        rect(cx - 31, y + 31, 20, 8, '#fff4d6');
+        rect(cx + 11, y + 31, 20, 8, '#fff4d6');
+        rect(cx - 24, y + 33, 7, 7, '#111827');
+        rect(cx + 17, y + 33, 7, 7, '#111827');
+        rect(cx - 33, y + 26, 22, 4, '#432d31');
+        rect(cx + 11, y + 26, 22, 4, '#432d31');
+        rect(cx - 5, y + 40, 10, 13, '#b87558');
+        rect(cx - 20, y + 61, 40, 7, currentBoss.hit ? '#fff4d6' : '#6e2732');
+        if (currentBoss.hit) {
+          text('X', cx - 21, y + 35, 14, '#ff3b4f', 'center');
+          text('X', cx + 21, y + 35, 14, '#ff3b4f', 'center');
+        }
+        ctx.restore();
+
+        if (currentBoss.type !== 'normal' && !currentBoss.hit && p > .65) {
+          drawSpeechBubble(currentBoss, cx, y);
+        }
+      };
+
+      const drawSpeechBubble = (currentBoss, cx, bossY) => {
+        const bubbleColor = currentBoss.type === 'red' ? '#ff3b4f' : '#43e88e';
+        const leftSide = currentBoss.cell.x > 500;
+        const bw = 230;
+        const bh = 58;
+        const bx = leftSide ? cx - bw - 42 : cx + 42;
+        const by = Math.max(121, bossY - 27);
+        rect(bx + 5, by + 5, bw, bh, '#05070c');
+        rect(bx, by, bw, bh, bubbleColor);
+        rect(bx + 5, by + 5, bw - 10, bh - 10, '#111827');
+        ctx.fillStyle = bubbleColor;
+        ctx.beginPath();
+        if (leftSide) {
+          ctx.moveTo(bx + bw, by + 31); ctx.lineTo(bx + bw + 25, by + 43); ctx.lineTo(bx + bw, by + 48);
+        } else {
+          ctx.moveTo(bx, by + 31); ctx.lineTo(bx - 25, by + 43); ctx.lineTo(bx, by + 48);
+        }
+        ctx.fill();
+        text(currentBoss.text, bx + bw / 2, by + bh / 2, 12, '#fff4d6', 'center', 900);
+      };
+
+      const drawCubicleFront = cell => {
+        rect(cell.x - 12, cell.y + 78, cell.w + 24, 27, '#101522');
+        rect(cell.x - 12, cell.y + 78, cell.w + 24, 8, '#6377ff');
+        rect(cell.x - 4, cell.y + 90, cell.w + 8, 34, '#202a3f');
+        rect(cell.x + 5, cell.y + 96, cell.w - 10, 20, '#28344d');
+        rect(cell.x + cell.w / 2 - 3, cell.y + 91, 6, 32, '#151c2d');
+        rect(cell.x - 8, cell.y + 120, 10, 10, '#080b12');
+        rect(cell.x + cell.w - 2, cell.y + 120, 10, 10, '#080b12');
+      };
+
+      const drawEffects = () => {
+        particles.forEach(p => {
+          ctx.globalAlpha = Math.max(0, p.life / p.max);
+          rect(p.x - 4, p.y - 4, 8, 8, p.color);
+        });
+        ctx.globalAlpha = 1;
+        floaters.forEach(f => {
+          const alpha = Math.max(0, f.life / f.max);
+          ctx.globalAlpha = alpha;
+          text(f.text, f.x, f.y, 22, f.color, 'center');
+        });
+        ctx.globalAlpha = 1;
+      };
+
+      const drawHammer = now => {
+        if (state !== STATE.PLAYING || !mouse.visible) return;
+        const pressed = now < mouse.downUntil;
+        ctx.save();
+        ctx.translate(mouse.x, mouse.y);
+        ctx.rotate(pressed ? .28 : -.16);
+        rect(31, -2, 14, 58, '#783d24');
+        rect(34, 3, 8, 47, '#b66b36');
+        rect(5, -19, 65, 29, '#8d1727');
+        rect(0, -15, 75, 21, '#ff3b4f');
+        rect(8, -11, 55, 5, '#ff7885');
+        rect(63, -10, 12, 12, '#b72234');
+        rect(0, -13, 8, 17, '#d9273b');
+        ctx.restore();
+      };
+
+      const render = now => {
+        ctx.save();
+        if (now < shakeUntil) ctx.translate((Math.random() - .5) * 14, (Math.random() - .5) * 14);
+        drawBackground();
+        cubicles.forEach(drawCubicleBack);
+        if (boss) drawBoss(boss, now);
+        cubicles.forEach(drawCubicleFront);
+        drawEffects();
+        ctx.restore();
+        drawHammer(now);
+      };
+
+      const loop = now => {
+        const dt = Math.min(.033, (now - lastFrame) / 1000);
+        lastFrame = now;
+        update(now, dt);
+        render(now);
+        requestAnimationFrame(loop);
+      };
+
+      const pointerMove = event => {
+        mouse = { ...mouse, ...getPointer(event), visible: true };
+      };
+
+      const pointerDown = event => {
+        ensureAudio();
+        const point = getPointer(event);
+        mouse = { ...mouse, ...point, visible: true, downUntil: performance.now() + 130 };
+        whack(point.x, point.y, performance.now());
+        if (event.cancelable) event.preventDefault();
+      };
+
+      try {
+        shell.addEventListener('pointermove', pointerMove);
+        shell.addEventListener('pointerdown', pointerDown);
+        shell.addEventListener('pointerleave', () => { mouse.visible = false; });
+        startButton.addEventListener('click', startGame);
+        playAgainButton.addEventListener('click', startGame);
+        window.addEventListener('keydown', event => {
+          if ((event.code === 'Space' || event.code === 'Enter') && state !== STATE.PLAYING) startGame();
+        });
+      } catch (error) {
+        console.error('Input initialization failed:', error);
+      }
+
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
