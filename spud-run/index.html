@@ -1,0 +1,1147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071d49">
+  <title>Spud Run — Escape the Showroom</title>
+  <style>
+    :root {
+      --blue: #0058a3;
+      --navy: #071d49;
+      --yellow: #ffda1a;
+      --cream: #fff7d6;
+      --orange: #f07818;
+      --ink: #06132c;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--navy);
+      color: white;
+      font-family: "Arial Black", Impact, system-ui, sans-serif;
+      touch-action: none;
+      user-select: none;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      min-height: -webkit-fill-available;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(0, 88, 163, .6), transparent 36%),
+        linear-gradient(150deg, #03102b 0%, #08265c 100%);
+    }
+
+    .game-shell {
+      position: relative;
+      width: min(100vw, calc(100vh * 16 / 9));
+      height: min(100vh, calc(100vw * 9 / 16));
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: #d9d3c4;
+      box-shadow: 0 24px 80px rgba(0,0,0,.6);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
+
+    .topbar {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+      filter: drop-shadow(0 3px 0 rgba(0,0,0,.25));
+    }
+
+    .brand {
+      padding: 7px 13px 8px;
+      border: 3px solid var(--yellow);
+      border-radius: 8px;
+      background: var(--blue);
+      color: var(--yellow);
+      font-size: clamp(12px, 2vw, 20px);
+      line-height: .9;
+      letter-spacing: -1px;
+      transform: rotate(-1deg);
+    }
+
+    .brand small {
+      display: block;
+      margin-top: 5px;
+      color: white;
+      font: 700 clamp(6px, .8vw, 9px)/1 system-ui, sans-serif;
+      letter-spacing: 2px;
+    }
+
+    .hud {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font: 900 clamp(9px, 1.45vw, 15px)/1 system-ui, sans-serif;
+    }
+
+    .pill {
+      min-width: 88px;
+      padding: 8px 11px;
+      border: 2px solid rgba(255,255,255,.8);
+      border-radius: 999px;
+      background: rgba(7,29,73,.92);
+      text-align: center;
+    }
+
+    .pill.parts { color: var(--yellow); }
+    .pill.time.danger { color: #ff785e; animation: pulse .55s infinite alternate; }
+    @keyframes pulse { to { transform: scale(1.07); } }
+
+    .dash-meter {
+      position: absolute;
+      right: 18px;
+      bottom: 16px;
+      width: clamp(110px, 18vw, 180px);
+      pointer-events: none;
+      font: 900 clamp(8px, 1.2vw, 12px)/1 system-ui, sans-serif;
+      text-align: right;
+      text-shadow: 0 2px 0 #000;
+    }
+
+    .meter-track {
+      height: 9px;
+      margin-top: 6px;
+      overflow: hidden;
+      border: 2px solid white;
+      border-radius: 99px;
+      background: #10224a;
+    }
+
+    .meter-fill {
+      width: 100%;
+      height: 100%;
+      background: var(--yellow);
+      transform-origin: left;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(3, 14, 41, .73);
+      backdrop-filter: blur(5px);
+      transition: opacity .2s ease;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .overlay.hidden { opacity: 0; pointer-events: none; }
+
+    .card {
+      width: min(620px, 92%);
+      padding: clamp(22px, 4vw, 38px);
+      border: 5px solid var(--yellow);
+      border-radius: 22px 6px 22px 6px;
+      background: var(--blue);
+      box-shadow: 12px 12px 0 rgba(0,0,0,.28);
+      text-align: center;
+      transform: rotate(-.35deg);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--yellow);
+      font: 900 clamp(10px, 1.3vw, 13px)/1 system-ui, sans-serif;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: white;
+      font-size: clamp(38px, 8vw, 82px);
+      line-height: .82;
+      letter-spacing: -4px;
+      text-transform: uppercase;
+      text-shadow: 5px 5px 0 var(--navy);
+    }
+
+    h1 span { color: var(--yellow); }
+
+    .tagline {
+      max-width: 470px;
+      margin: 18px auto 20px;
+      font: 700 clamp(12px, 1.8vw, 17px)/1.35 system-ui, sans-serif;
+    }
+
+    .howto {
+      display: flex;
+      justify-content: center;
+      gap: 8px 16px;
+      flex-wrap: wrap;
+      margin: 0 0 20px;
+      color: #dbeeff;
+      font: 700 clamp(9px, 1.35vw, 12px)/1 system-ui, sans-serif;
+    }
+
+    kbd {
+      display: inline-block;
+      min-width: 24px;
+      padding: 4px 6px;
+      border: 2px solid #92b6d9;
+      border-bottom-width: 4px;
+      border-radius: 5px;
+      background: #fff;
+      color: var(--navy);
+      font: 900 11px/1 system-ui, sans-serif;
+    }
+
+    button {
+      appearance: none;
+      padding: 13px 27px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--yellow);
+      color: var(--navy);
+      box-shadow: 0 6px 0 #b98d00;
+      font: 1000 clamp(14px, 2.1vw, 20px)/1 system-ui, sans-serif;
+      letter-spacing: .5px;
+      cursor: pointer;
+      transform: translateY(0);
+    }
+
+    button:hover { filter: brightness(1.08); }
+    button:active { transform: translateY(5px); box-shadow: 0 1px 0 #b98d00; }
+
+    .result-title { font-size: clamp(34px, 7vw, 68px); }
+    .result-copy { margin-bottom: 6px; }
+    .scoreline { margin: 7px 0 22px; color: var(--yellow); font-size: clamp(14px, 2vw, 20px); }
+
+    .touch-controls {
+      position: absolute;
+      left: 16px;
+      bottom: 14px;
+      display: none;
+      width: 112px;
+      height: 112px;
+      border: 2px solid rgba(255,255,255,.24);
+      border-radius: 50%;
+      background: rgba(7,29,73,.26);
+      pointer-events: none;
+    }
+
+    .stick {
+      position: absolute;
+      left: 36px;
+      top: 36px;
+      width: 40px;
+      height: 40px;
+      border: 2px solid rgba(255,255,255,.8);
+      border-radius: 50%;
+      background: rgba(255,218,26,.8);
+    }
+
+    .rotate-note {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      place-items: center;
+      padding: 30px;
+      background: var(--navy);
+      color: var(--yellow);
+      text-align: center;
+      font-size: 22px;
+    }
+
+    @supports (height: 100dvh) {
+      html, body { height: 100dvh; }
+      .game-shell {
+        width: min(100vw, calc(100dvh * 16 / 9));
+        height: min(100dvh, calc(100vw * 9 / 16));
+      }
+    }
+
+    /* On phones the HUD owns a real row; it never covers the canvas. */
+    @media (pointer: coarse) and (orientation: landscape) {
+      .game-shell {
+        width: min(
+          calc(100vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)),
+          calc((100dvh - 34px) * 16 / 9)
+        );
+        height: auto;
+        aspect-ratio: auto;
+        display: grid;
+        grid-template-rows: 34px auto;
+      }
+
+      canvas {
+        grid-row: 2;
+        width: 100%;
+        height: auto;
+        min-height: 0;
+      }
+
+      .topbar {
+        position: relative;
+        z-index: 5;
+        grid-row: 1;
+        top: auto;
+        left: auto;
+        right: auto;
+        width: 100%;
+        height: 34px;
+        align-items: center;
+        padding: 0 10px;
+        border-bottom: 2px solid var(--yellow);
+        background: var(--navy);
+        filter: none;
+        box-shadow: none;
+      }
+
+      .brand {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        font-size: 11px;
+        line-height: 1;
+        transform: none;
+        white-space: nowrap;
+      }
+
+      .brand small { display: none; }
+      .hud { gap: 5px; font-size: 9px; }
+      .pill {
+        min-width: 58px;
+        padding: 4px 7px;
+        border-width: 1px;
+        background: var(--blue);
+      }
+
+      .overlay { top: 34px; }
+    }
+
+    /* Safari's bars can leave less than 360px of usable landscape height. */
+    @media (pointer: coarse) and (orientation: landscape) and (max-height: 450px) {
+      .overlay {
+        padding:
+          max(6px, env(safe-area-inset-top))
+          max(10px, env(safe-area-inset-right))
+          max(8px, env(safe-area-inset-bottom))
+          max(10px, env(safe-area-inset-left));
+      }
+
+      .card {
+        width: min(560px, 88%);
+        max-height: 100%;
+        padding: 10px 18px 12px;
+        border-width: 3px;
+        border-radius: 14px 5px 14px 5px;
+        box-shadow: 6px 6px 0 rgba(0,0,0,.28);
+        overflow-y: auto;
+      }
+
+      .eyebrow { margin-bottom: 4px; font-size: 8px; letter-spacing: 2px; }
+      h1 { font-size: clamp(34px, 13vh, 48px); line-height: .78; letter-spacing: -2px; text-shadow: 3px 3px 0 var(--navy); }
+      .tagline { max-width: 510px; margin: 7px auto 8px; font-size: clamp(9px, 3.2vh, 12px); line-height: 1.18; }
+      .howto { gap: 4px 10px; margin-bottom: 8px; font-size: 8px; }
+      kbd { min-width: 19px; padding: 2px 4px; border-width: 1px; border-bottom-width: 2px; font-size: 8px; }
+      button { padding: 8px 20px; box-shadow: 0 4px 0 #b98d00; font-size: 13px; }
+      .result-title { font-size: clamp(30px, 12vh, 44px); }
+      .scoreline { margin: 4px 0 8px; font-size: 12px; }
+    }
+
+    @media (pointer: coarse) and (orientation: landscape) and (max-height: 320px) {
+      .card { padding-top: 7px; padding-bottom: 9px; }
+      .howto { display: none; }
+      .tagline { margin: 4px auto 6px; }
+      button { padding-top: 7px; padding-bottom: 7px; }
+    }
+
+    @media (pointer: coarse) { .touch-controls { display: block; } }
+    @media (orientation: portrait) and (max-width: 700px) { .rotate-note { display: grid; } }
+  </style>
+</head>
+<body>
+  <main class="game-shell" aria-label="Spud Run game">
+    <canvas id="game" width="960" height="540" aria-label="Top-down escape game"></canvas>
+
+    <div class="topbar" aria-hidden="true">
+      <div class="brand">SPUD RUN<small>SHOWROOM ESCAPE</small></div>
+      <div class="hud">
+        <div class="pill" id="chapterHud">CH 1/4</div>
+        <div class="pill parts" id="partsHud">PACKS 0/3</div>
+        <div class="pill time" id="timeHud">60.0s</div>
+      </div>
+    </div>
+
+    <div class="dash-meter" aria-hidden="true">
+      BUTTER DASH <span id="dashLabel">READY</span>
+      <div class="meter-track"><div class="meter-fill" id="dashFill"></div></div>
+    </div>
+
+    <div class="touch-controls" id="touchPad" aria-hidden="true"><div class="stick" id="stick"></div></div>
+
+    <section class="overlay" id="startOverlay">
+      <div class="card">
+        <p class="eyebrow">A flat-pack panic</p>
+        <h1>SPUD<br><span>RUN!</span></h1>
+        <p class="tagline">You’re tonight’s special. Escape four increasingly dangerous departments before the kitchen closes in.</p>
+        <div class="howto">
+          <span><kbd>WASD</kbd> / <kbd>ARROWS</kbd> MOVE</span>
+          <span><kbd>SPACE</kbd> BUTTER DASH</span>
+          <span>TOUCH: DRAG + TAP</span>
+        </div>
+        <button id="startBtn">ROLL FOR FREEDOM</button>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="endOverlay">
+      <div class="card">
+        <p class="eyebrow" id="resultEyebrow">Kitchen status</p>
+        <h1 class="result-title" id="resultTitle">ESCAPED!</h1>
+        <p class="tagline result-copy" id="resultCopy"></p>
+        <p class="scoreline" id="scoreLine"></p>
+        <button id="retryBtn">RUN IT AGAIN</button>
+      </div>
+    </section>
+  </main>
+  <div class="rotate-note">ROTATE YOUR PHONE<br>THE EXIT IS SIDEWAYS ↻</div>
+
+  <script>
+  (() => {
+    'use strict';
+
+    const canvas = document.querySelector('#game');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+
+    const W = canvas.width;
+    const H = canvas.height;
+    const startOverlay = document.querySelector('#startOverlay');
+    const endOverlay = document.querySelector('#endOverlay');
+    const chapterHud = document.querySelector('#chapterHud');
+    const partsHud = document.querySelector('#partsHud');
+    const timeHud = document.querySelector('#timeHud');
+    const dashFill = document.querySelector('#dashFill');
+    const dashLabel = document.querySelector('#dashLabel');
+    const resultTitle = document.querySelector('#resultTitle');
+    const resultCopy = document.querySelector('#resultCopy');
+    const resultEyebrow = document.querySelector('#resultEyebrow');
+    const scoreLine = document.querySelector('#scoreLine');
+    const touchPad = document.querySelector('#touchPad');
+    const stick = document.querySelector('#stick');
+    const gameShell = document.querySelector('.game-shell');
+    const brandSubtitle = document.querySelector('.brand small');
+
+    const STATE = { IDLE: 'IDLE', PLAYING: 'PLAYING', GAMEOVER: 'GAMEOVER' };
+    let state = STATE.IDLE;
+    let last = performance.now();
+    let audio = null;
+    let gameTime = 60;
+    let parts = 0;
+    let score = 0;
+    let totalScore = 0;
+    let chapterIndex = 0;
+    let chapterIntro = 0;
+    let resultAction = 'retry';
+    let shake = 0;
+    let flash = 0;
+    let exitOpen = false;
+    let nearExitMessage = false;
+
+    const keys = new Set();
+    const input = { x: 0, y: 0 };
+    const pointer = { active: false, id: null, startX: 0, startY: 0, x: 0, y: 0 };
+
+    const baseWalls = [
+      { x: 0, y: 0, w: 960, h: 35 }, { x: 0, y: 505, w: 960, h: 35 },
+      { x: 0, y: 0, w: 35, h: 540 }, { x: 925, y: 0, w: 35, h: 212 },
+      { x: 925, y: 328, w: 35, h: 212 },
+      { x: 142, y: 92, w: 228, h: 32, shelf: true },
+      { x: 488, y: 92, w: 260, h: 32, shelf: true },
+      { x: 105, y: 205, w: 210, h: 34, shelf: true },
+      { x: 408, y: 198, w: 270, h: 34, shelf: true },
+      { x: 758, y: 172, w: 167, h: 34, shelf: true },
+      { x: 190, y: 322, w: 260, h: 34, shelf: true },
+      { x: 545, y: 307, w: 255, h: 34, shelf: true },
+      { x: 85, y: 425, w: 205, h: 32, shelf: true },
+      { x: 386, y: 419, w: 238, h: 32, shelf: true },
+      { x: 716, y: 415, w: 209, h: 32, shelf: true },
+      { x: 350, y: 124, w: 34, h: 46, shelf: true },
+      { x: 710, y: 232, w: 34, h: 50, shelf: true },
+      { x: 480, y: 341, w: 34, h: 48, shelf: true }
+    ];
+
+    const exit = { x: 925, y: 212, w: 35, h: 116 };
+    const chapters = [
+      {
+        name: 'The Showroom', kicker: 'Chapter 1 · Closing time', time: 60,
+        intro: 'Learn the lanes. The cooks are only warming up.',
+        extraWalls: [],
+        packs: [{x:845,y:115},{x:115,y:375},{x:668,y:472}],
+        enemies: [{x:860,y:370,speed:72},{x:520,y:265,speed:68}],
+        carts: [{x:325,y:278,vx:95,vy:0},{x:835,y:476,vx:-86,vy:0}],
+        labels: [{x:72,y:155,t:'BEDROOMS'},{x:830,y:70,t:'LIGHTING'},{x:430,y:290,t:'YOU ARE LOST'},{x:805,y:397,t:'KITCHENWARE'}],
+        colors: ['#ddd8ca','#cbc4b3','#174f81']
+      },
+      {
+        name: 'Market Hall', kicker: 'Chapter 2 · Shortcut denied', time: 56,
+        intro: 'Four packs. Faster carts. Absolutely no shortcuts.',
+        extraWalls: [{x:315,y:244,w:34,h:63,shelf:true},{x:800,y:342,w:34,h:52,shelf:true}],
+        packs: [{x:90,y:278},{x:420,y:156},{x:850,y:260},{x:680,y:380}],
+        enemies: [{x:865,y:365,speed:82},{x:530,y:270,speed:78},{x:155,y:478,speed:75}],
+        carts: [{x:330,y:278,vx:120,vy:0},{x:830,y:476,vx:-112,vy:0},{x:825,y:245,vx:0,vy:105}],
+        labels: [{x:77,y:155,t:'RUGS'},{x:835,y:70,t:'LAMPS'},{x:430,y:290,t:'NO SHORTCUTS'},{x:810,y:397,t:'PLANTS'}],
+        colors: ['#d9e0d3','#c4cdbd','#28634c']
+      },
+      {
+        name: 'The Warehouse', kicker: 'Chapter 3 · Aisle 404', time: 52,
+        intro: 'The aisles are busy, the staff are quick, and the exit is far away.',
+        extraWalls: [{x:35,y:270,w:120,h:30,shelf:true},{x:800,y:342,w:34,h:52,shelf:true}],
+        packs: [{x:112,y:152},{x:845,y:142},{x:350,y:278},{x:500,y:378},{x:680,y:472}],
+        enemies: [{x:860,y:370,speed:90},{x:520,y:265,speed:86},{x:150,y:478,speed:83},{x:820,y:70,speed:80}],
+        carts: [{x:325,y:278,vx:138,vy:0},{x:835,y:476,vx:-126,vy:0},{x:390,y:160,vx:0,vy:118}],
+        labels: [{x:78,y:155,t:'AISLE 12'},{x:830,y:70,t:'BULK STOCK'},{x:430,y:290,t:'PICKING ZONE'},{x:810,y:397,t:'LOADING'}],
+        colors: ['#d4d8dc','#bfc5cb','#354f68']
+      },
+      {
+        name: 'Kitchen Gauntlet', kicker: 'Final chapter · Dinner rush', time: 48,
+        intro: 'Six packs. Five cooks. One last roll for freedom.',
+        extraWalls: [{x:150,y:240,w:28,h:70,shelf:true},{x:315,y:244,w:34,h:63,shelf:true},{x:675,y:342,w:34,h:52,shelf:true}],
+        packs: [{x:82,y:278},{x:110,y:150},{x:430,y:158},{x:845,y:140},{x:750,y:378},{x:675,y:474}],
+        enemies: [{x:860,y:370,speed:98},{x:520,y:265,speed:94},{x:150,y:478,speed:90},{x:815,y:70,speed:88},{x:340,y:385,speed:86}],
+        carts: [{x:325,y:278,vx:152,vy:0},{x:835,y:476,vx:-140,vy:0},{x:390,y:160,vx:0,vy:132},{x:690,y:270,vx:0,vy:-125}],
+        labels: [{x:80,y:155,t:'FRYERS'},{x:830,y:70,t:'OVENS'},{x:430,y:290,t:'DINNER RUSH'},{x:810,y:397,t:'GRAVY'}],
+        colors: ['#e4d4c8','#d2bfb1','#853d35']
+      }
+    ];
+    let walls = [...baseWalls];
+    let packs = [];
+    let enemies = [];
+    let carts = [];
+    let crumbs = [];
+    let particles = [];
+    let floaters = [];
+
+    const player = {
+      x: 72, y: 68, r: 17, vx: 0, vy: 0, angle: 0,
+      dash: 0, dashCooldown: 0, invuln: 0, squash: 0
+    };
+
+    const palettes = {
+      blue: '#0058a3', navy: '#071d49', yellow: '#ffda1a',
+      floor: '#ddd8ca', grid: '#cbc4b3', shelf: '#174f81',
+      potato: '#bb742d', potatoLight: '#e5a34e', chef: '#f5f1df'
+    };
+
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const rnd = (min, max) => min + Math.random() * (max - min);
+
+    const initAudio = () => {
+      try {
+        if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+        if (audio.state === 'suspended') audio.resume();
+      } catch (_) { audio = null; }
+    };
+
+    const tone = (freq, duration = .1, type = 'square', volume = .055, slide = 0) => {
+      if (!audio) return;
+      try {
+        const now = audio.currentTime;
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), now + duration);
+        gain.gain.setValueAtTime(volume, now);
+        gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+        osc.connect(gain).connect(audio.destination);
+        osc.start(now);
+        osc.stop(now + duration);
+      } catch (_) { /* Audio must never block gameplay. */ }
+    };
+
+    const noise = (duration = .12, volume = .04) => {
+      if (!audio) return;
+      try {
+        const size = Math.floor(audio.sampleRate * duration);
+        const buffer = audio.createBuffer(1, size, audio.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < size; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / size);
+        const src = audio.createBufferSource();
+        const gain = audio.createGain();
+        src.buffer = buffer;
+        gain.gain.value = volume;
+        src.connect(gain).connect(audio.destination);
+        src.start();
+      } catch (_) { /* no-op */ }
+    };
+
+    const sfx = {
+      collect: () => { tone(440, .08, 'square', .05, 200); setTimeout(() => tone(720, .12, 'square', .04, 180), 70); },
+      dash: () => { noise(.1, .05); tone(180, .13, 'sawtooth', .035, 360); },
+      hit: () => { noise(.18, .08); tone(130, .22, 'sawtooth', .06, -70); },
+      win: () => [0, 100, 200, 310].forEach((t, i) => setTimeout(() => tone([330, 440, 554, 880][i], .22, 'square', .05, 50), t)),
+      lose: () => { tone(220, .25, 'sawtooth', .06, -80); setTimeout(() => tone(130, .45, 'square', .05, -60), 210); },
+      locked: () => tone(110, .11, 'square', .045, -15)
+    };
+
+    const circleRect = (x, y, r, rect) => {
+      const cx = clamp(x, rect.x, rect.x + rect.w);
+      const cy = clamp(y, rect.y, rect.y + rect.h);
+      return (x - cx) ** 2 + (y - cy) ** 2 < r ** 2;
+    };
+
+    const solidAt = (x, y, r) => walls.some(w => circleRect(x, y, r, w));
+
+    const moveCircle = (entity, dx, dy) => {
+      entity.x += dx;
+      for (const wall of walls) {
+        if (!circleRect(entity.x, entity.y, entity.r, wall)) continue;
+        if (dx > 0) entity.x = wall.x - entity.r;
+        else if (dx < 0) entity.x = wall.x + wall.w + entity.r;
+      }
+      entity.y += dy;
+      for (const wall of walls) {
+        if (!circleRect(entity.x, entity.y, entity.r, wall)) continue;
+        if (dy > 0) entity.y = wall.y - entity.r;
+        else if (dy < 0) entity.y = wall.y + wall.h + entity.r;
+      }
+    };
+
+    const safeDirection = (enemy, tx, ty) => {
+      const angle = Math.atan2(ty - enemy.y, tx - enemy.x);
+      const options = [angle, angle + .55, angle - .55, angle + 1.15, angle - 1.15, angle + Math.PI];
+      for (const a of options) {
+        const px = enemy.x + Math.cos(a) * 24;
+        const py = enemy.y + Math.sin(a) * 24;
+        if (!solidAt(px, py, enemy.r + 2)) return { x: Math.cos(a), y: Math.sin(a) };
+      }
+      return { x: 0, y: 0 };
+    };
+
+    const addFloater = (x, y, text, color = '#fff') => floaters.push({ x, y, text, color, life: 1 });
+
+    const burst = (x, y, color, count = 12, speed = 110) => {
+      for (let i = 0; i < count; i++) {
+        const a = Math.random() * Math.PI * 2;
+        particles.push({ x, y, vx: Math.cos(a) * rnd(25, speed), vy: Math.sin(a) * rnd(25, speed), life: rnd(.35, .8), color, size: rnd(2, 6) });
+      }
+    };
+
+    const loadChapter = () => {
+      const chapter = chapters[chapterIndex];
+      gameTime = chapter.time;
+      parts = 0;
+      shake = 0;
+      flash = 0;
+      exitOpen = false;
+      nearExitMessage = false;
+      chapterIntro = 2.7;
+      walls = [...baseWalls, ...chapter.extraWalls];
+      packs = chapter.packs.map((p, i) => ({ ...p, id: i, got: false, bob: i * 2.1 }));
+      enemies = chapter.enemies.map(e => ({ ...e, r: 17, stun: 0, think: 0, dir: {x:0,y:0}, kind: 'chef' }));
+      carts = chapter.carts.map(c => ({ ...c, r: 15, angle: Math.atan2(c.vy, c.vx), kind: 'cart' }));
+      crumbs = [];
+      particles = [];
+      floaters = [];
+      [palettes.floor, palettes.grid, palettes.shelf] = chapter.colors;
+      brandSubtitle.textContent = chapter.name.toUpperCase();
+      Object.assign(player, { x: 72, y: 68, vx: 0, vy: 0, angle: 0, dash: 0, dashCooldown: 0, invuln: 0, squash: 0 });
+      updateHud();
+    };
+
+    const playChapter = () => {
+      initAudio();
+      loadChapter();
+      state = STATE.PLAYING;
+      startOverlay.classList.add('hidden');
+      endOverlay.classList.add('hidden');
+      last = performance.now();
+      tone(260, .08, 'square', .04, 100);
+    };
+
+    const startRun = () => {
+      chapterIndex = 0;
+      totalScore = 0;
+      score = 0;
+      playChapter();
+    };
+
+    const handleResultAction = () => {
+      if (resultAction === 'next') chapterIndex++;
+      else if (resultAction === 'new') { chapterIndex = 0; totalScore = 0; score = 0; }
+      playChapter();
+    };
+
+    const endGame = (won, reason = '') => {
+      if (state !== STATE.PLAYING) return;
+      state = STATE.GAMEOVER;
+      const chapter = chapters[chapterIndex];
+      const isFinal = chapterIndex === chapters.length - 1;
+      const chapterScore = won ? Math.round(gameTime * 100 + chapter.packs.length * 1000) : 0;
+      if (won) { score = chapterScore; totalScore += chapterScore; }
+      if (won && !isFinal) {
+        resultAction = 'next';
+        resultEyebrow.textContent = `${chapter.name} cleared`;
+        resultTitle.innerHTML = `CHAPTER ${chapterIndex + 1}<br><span>CLEAR!</span>`;
+        resultCopy.textContent = `Next: ${chapters[chapterIndex + 1].name}. ${chapters[chapterIndex + 1].intro}`;
+        scoreLine.textContent = `+${chapterScore.toLocaleString()} · RUN SCORE ${totalScore.toLocaleString()}`;
+        document.querySelector('#retryBtn').textContent = 'NEXT CHAPTER →';
+        sfx.collect();
+      } else if (won) {
+        resultAction = 'new';
+        resultEyebrow.textContent = 'All four chapters cleared';
+        resultTitle.innerHTML = 'SPUD<br><span>FREE!</span>';
+        resultCopy.textContent = 'You conquered the entire store and escaped with your dignity and most of your skin.';
+        scoreLine.textContent = `FINAL RUN SCORE · ${totalScore.toLocaleString()}`;
+        document.querySelector('#retryBtn').textContent = 'START A NEW RUN';
+        sfx.win();
+      } else {
+        resultAction = 'retry';
+        resultEyebrow.textContent = `${chapter.name} · attempt failed`;
+        resultTitle.innerHTML = 'DINNER<br><span>WINS.</span>';
+        resultCopy.textContent = reason || 'You got caught between the cookware and the gravy aisle.';
+        scoreLine.textContent = `PACKS ${parts}/${chapter.packs.length} · RUN SCORE ${totalScore.toLocaleString()}`;
+        document.querySelector('#retryBtn').textContent = 'RETRY CHAPTER';
+        sfx.lose();
+      }
+      endOverlay.classList.remove('hidden');
+    };
+
+    const dash = () => {
+      if (state !== STATE.PLAYING || player.dashCooldown > 0) return;
+      const mag = Math.hypot(input.x, input.y);
+      if (mag < .1) {
+        input.x = Math.cos(player.angle);
+        input.y = Math.sin(player.angle);
+      }
+      player.dash = .24;
+      player.dashCooldown = 2.15;
+      player.invuln = .32;
+      player.squash = 1;
+      burst(player.x, player.y, '#ffda1a', 10, 90);
+      sfx.dash();
+    };
+
+    const caught = (source) => {
+      if (player.invuln > 0) {
+        source.stun = 1.25;
+        const a = Math.atan2(source.y - player.y, source.x - player.x);
+        moveCircle(source, Math.cos(a) * 45, Math.sin(a) * 45);
+        burst(source.x, source.y, '#fff7d6', 15, 150);
+        addFloater(source.x, source.y - 22, 'NOT TODAY!', '#ffda1a');
+        shake = 7;
+        return;
+      }
+      shake = 12;
+      flash = 1;
+      sfx.hit();
+      endGame(false, source.kind === 'cart' ? 'A runaway cart delivered you straight to kitchenware.' : 'A cook caught you. Mash happens.');
+    };
+
+    const updateInput = () => {
+      let x = 0, y = 0;
+      if (keys.has('ArrowLeft') || keys.has('KeyA')) x--;
+      if (keys.has('ArrowRight') || keys.has('KeyD')) x++;
+      if (keys.has('ArrowUp') || keys.has('KeyW')) y--;
+      if (keys.has('ArrowDown') || keys.has('KeyS')) y++;
+      if (pointer.active) {
+        x += clamp((pointer.x - pointer.startX) / 38, -1, 1);
+        y += clamp((pointer.y - pointer.startY) / 38, -1, 1);
+      }
+      const mag = Math.hypot(x, y);
+      input.x = mag > 1 ? x / mag : x;
+      input.y = mag > 1 ? y / mag : y;
+    };
+
+    const updateHud = () => {
+      const chapter = chapters[chapterIndex];
+      chapterHud.textContent = `CH ${chapterIndex + 1}/${chapters.length}`;
+      partsHud.textContent = `PACKS ${parts}/${chapter.packs.length}`;
+      timeHud.textContent = `${Math.max(0, gameTime).toFixed(1)}s`;
+      timeHud.classList.toggle('danger', gameTime < 12 && state === STATE.PLAYING);
+      const ready = clamp(1 - player.dashCooldown / 2.15, 0, 1);
+      dashFill.style.transform = `scaleX(${ready})`;
+      dashLabel.textContent = ready >= 1 ? 'READY' : `${Math.ceil(player.dashCooldown * 10) / 10}s`;
+    };
+
+    const update = (dt) => {
+      if (state !== STATE.PLAYING) return;
+      const chapter = chapters[chapterIndex];
+      gameTime -= dt;
+      chapterIntro = Math.max(0, chapterIntro - dt);
+      if (gameTime <= 0) { endGame(false, 'Closing time. The cafeteria finally caught up.'); return; }
+      updateInput();
+
+      player.dash = Math.max(0, player.dash - dt);
+      player.dashCooldown = Math.max(0, player.dashCooldown - dt);
+      player.invuln = Math.max(0, player.invuln - dt);
+      player.squash = Math.max(0, player.squash - dt * 4);
+      const speed = player.dash > 0 ? 380 : 178;
+      const accel = player.dash > 0 ? .95 : .22;
+      player.vx = lerp(player.vx, input.x * speed, accel);
+      player.vy = lerp(player.vy, input.y * speed, accel);
+      if (Math.hypot(input.x, input.y) < .05) {
+        player.vx *= Math.pow(.0006, dt);
+        player.vy *= Math.pow(.0006, dt);
+      } else player.angle = Math.atan2(input.y, input.x);
+      moveCircle(player, player.vx * dt, player.vy * dt);
+
+      if (Math.hypot(player.vx, player.vy) > 40 && Math.random() < dt * 8) {
+        crumbs.push({ x: player.x - Math.cos(player.angle) * 12, y: player.y - Math.sin(player.angle) * 12, life: 1.2, size: rnd(1, 3) });
+      }
+
+      packs.forEach(pack => {
+        pack.bob += dt * 3;
+        if (!pack.got && dist(player, pack) < player.r + 19) {
+          pack.got = true;
+          parts++;
+          gameTime = Math.min(chapter.time + 6, gameTime + 4);
+          addFloater(pack.x, pack.y - 25, '+4 SEC', '#ffda1a');
+          burst(pack.x, pack.y, '#ffda1a', 20, 150);
+          sfx.collect();
+          if (parts === chapter.packs.length) {
+            exitOpen = true;
+            addFloater(840, 280, 'EXIT OPEN!', '#72e08a');
+            tone(660, .28, 'square', .05, 300);
+          }
+        }
+      });
+
+      enemies.forEach((enemy, idx) => {
+        enemy.stun = Math.max(0, enemy.stun - dt);
+        enemy.think -= dt;
+        if (enemy.think <= 0) {
+          const target = idx === 0 || parts > 0 ? player : { x: 520, y: 265 };
+          enemy.dir = safeDirection(enemy, target.x, target.y);
+          enemy.think = rnd(.12, .26);
+        }
+        if (enemy.stun <= 0) {
+          const rage = 1 + (chapter.time - gameTime) / 150 + parts * .055 + chapterIndex * .025;
+          moveCircle(enemy, enemy.dir.x * enemy.speed * rage * dt, enemy.dir.y * enemy.speed * rage * dt);
+        }
+        if (dist(player, enemy) < player.r + enemy.r + 2) caught(enemy);
+      });
+
+      carts.forEach(cart => {
+        const oldX = cart.x, oldY = cart.y;
+        moveCircle(cart, cart.vx * dt, cart.vy * dt);
+        if (Math.abs(cart.x - oldX) < Math.abs(cart.vx * dt) * .4) cart.vx *= -1;
+        if (Math.abs(cart.y - oldY) < Math.abs(cart.vy * dt) * .4) cart.vy *= -1;
+        cart.angle = Math.atan2(cart.vy, cart.vx);
+        if (dist(player, cart) < player.r + cart.r + 3) caught({ ...cart, kind: 'cart', stun: 0 });
+      });
+
+      if (circleRect(player.x, player.y, player.r, exit)) {
+        if (exitOpen) endGame(true);
+        else if (!nearExitMessage) {
+          nearExitMessage = true;
+          addFloater(860, 280, `NEED ${chapter.packs.length} PACKS!`, '#ff785e');
+          sfx.locked();
+          setTimeout(() => { nearExitMessage = false; }, 1200);
+        }
+      }
+
+      crumbs.forEach(c => c.life -= dt);
+      crumbs = crumbs.filter(c => c.life > 0);
+      particles.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .95; p.vy *= .95; p.life -= dt; });
+      particles = particles.filter(p => p.life > 0);
+      floaters.forEach(f => { f.y -= 28 * dt; f.life -= dt; });
+      floaters = floaters.filter(f => f.life > 0);
+      shake = Math.max(0, shake - dt * 20);
+      flash = Math.max(0, flash - dt * 3);
+      updateHud();
+    };
+
+    const roundedRect = (x, y, w, h, r) => {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, r);
+    };
+
+    const drawFloor = () => {
+      ctx.fillStyle = palettes.floor;
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = palettes.grid;
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 32) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+      for (let y = 0; y < H; y += 32) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+      ctx.fillStyle = 'rgba(255,255,255,.18)';
+      for (let i = 0; i < 90; i++) ctx.fillRect((i * 83) % W, (i * 47) % H, 3, 3);
+    };
+
+    const drawShelf = (w) => {
+      ctx.fillStyle = 'rgba(7,29,73,.18)';
+      roundedRect(w.x + 5, w.y + 7, w.w, w.h, 4); ctx.fill();
+      ctx.fillStyle = palettes.shelf;
+      roundedRect(w.x, w.y, w.w, w.h, 4); ctx.fill();
+      ctx.fillStyle = '#f4cc16';
+      ctx.fillRect(w.x + 4, w.y + 4, w.w - 8, 6);
+      const boxes = Math.floor((w.w - 16) / 30);
+      for (let i = 0; i < boxes; i++) {
+        ctx.fillStyle = i % 3 === 0 ? '#d58b40' : i % 3 === 1 ? '#e4b870' : '#b87938';
+        ctx.fillRect(w.x + 9 + i * 30, w.y + 14, 22, w.h - 18);
+        ctx.fillStyle = 'rgba(255,255,255,.45)';
+        ctx.fillRect(w.x + 12 + i * 30, w.y + 18, 8, 2);
+      }
+    };
+
+    const drawWalls = () => {
+      walls.forEach(w => {
+        if (w.shelf) drawShelf(w);
+        else {
+          ctx.fillStyle = palettes.navy;
+          ctx.fillRect(w.x, w.y, w.w, w.h);
+          ctx.fillStyle = palettes.blue;
+          if (w.w > w.h) ctx.fillRect(w.x, w.y + w.h - 6, w.w, 6);
+          else ctx.fillRect(w.x + w.w - 6, w.y, 6, w.h);
+        }
+      });
+    };
+
+    const drawArrows = () => {
+      ctx.save();
+      ctx.globalAlpha = .16;
+      ctx.fillStyle = palettes.blue;
+      [[70,280],[340,275],[690,370],[855,280]].forEach(([x,y]) => {
+        ctx.save(); ctx.translate(x,y);
+        ctx.beginPath(); ctx.moveTo(-22,-8); ctx.lineTo(4,-8); ctx.lineTo(4,-17); ctx.lineTo(24,0); ctx.lineTo(4,17); ctx.lineTo(4,8); ctx.lineTo(-22,8); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      });
+      ctx.restore();
+    };
+
+    const drawExit = () => {
+      ctx.fillStyle = exitOpen ? '#30b85a' : '#b52e2e';
+      ctx.fillRect(exit.x, exit.y, exit.w, exit.h);
+      ctx.fillStyle = exitOpen ? '#72e08a' : '#f26b57';
+      ctx.fillRect(exit.x, exit.y, 8, exit.h);
+      ctx.save();
+      ctx.translate(911, 270); ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = exitOpen ? '#0a6424' : '#7d1414';
+      roundedRect(-44, -17, 88, 25, 5); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = '900 13px system-ui'; ctx.textAlign = 'center'; ctx.fillText(exitOpen ? 'EXIT →' : 'LOCKED', 0, 1);
+      ctx.restore();
+      if (exitOpen) {
+        ctx.strokeStyle = `rgba(114,224,138,${.35 + Math.sin(performance.now()/120)*.2})`;
+        ctx.lineWidth = 6;
+        ctx.strokeRect(exit.x - 7, exit.y - 7, exit.w + 14, exit.h + 14);
+      }
+    };
+
+    const drawPack = (p) => {
+      if (p.got) return;
+      const bob = Math.sin(p.bob) * 4;
+      ctx.save(); ctx.translate(p.x, p.y + bob); ctx.rotate(-.08);
+      ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(-17, 15, 36, 7);
+      ctx.fillStyle = '#ffda1a'; roundedRect(-18, -16, 36, 32, 4); ctx.fill();
+      ctx.strokeStyle = '#8f6900'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = palettes.blue; ctx.fillRect(-18, -3, 36, 7);
+      ctx.fillStyle = palettes.navy; ctx.font = '900 8px system-ui'; ctx.textAlign = 'center'; ctx.fillText('FLAT', 0, -7);
+      ctx.restore();
+    };
+
+    const drawPotato = () => {
+      ctx.save();
+      ctx.translate(player.x, player.y);
+      ctx.rotate(player.angle + Math.sin(performance.now() / 75) * Math.min(1, Math.hypot(player.vx, player.vy) / 300) * .16);
+      const stretch = player.dash > 0 ? 1.32 : 1 + player.squash * .2;
+      const squish = player.dash > 0 ? .76 : 1 - player.squash * .16;
+      ctx.scale(stretch, squish);
+      if (player.dash > 0) {
+        ctx.fillStyle = 'rgba(255,218,26,.35)';
+        ctx.beginPath(); ctx.ellipse(-28, 0, 25, 12, 0, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(2, 17, 17, 7, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = player.invuln > 0 && Math.floor(performance.now()/60)%2 ? '#ffda1a' : palettes.potato;
+      ctx.beginPath();
+      ctx.moveTo(-16,-8); ctx.bezierCurveTo(-12,-20,7,-22,16,-11); ctx.bezierCurveTo(23,-1,16,17,3,20); ctx.bezierCurveTo(-12,22,-21,9,-16,-8); ctx.fill();
+      ctx.strokeStyle = '#794018'; ctx.lineWidth = 3; ctx.stroke();
+      ctx.fillStyle = palettes.potatoLight;
+      [[-8,-10],[7,-13],[11,7],[-8,10]].forEach(([x,y]) => { ctx.beginPath(); ctx.ellipse(x,y,2.5,1.7,.3,0,Math.PI*2); ctx.fill(); });
+      ctx.fillStyle = '#071d49';
+      ctx.beginPath(); ctx.arc(4,-5,2.3,0,Math.PI*2); ctx.arc(12,-3,2.3,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#071d49'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(8,1,5,0.2,2.6); ctx.stroke();
+      ctx.restore();
+    };
+
+    const drawChef = (e) => {
+      ctx.save(); ctx.translate(e.x, e.y);
+      const a = Math.atan2(player.y - e.y, player.x - e.x); ctx.rotate(a);
+      if (e.stun > 0) ctx.rotate(Math.sin(performance.now() / 35) * .25);
+      ctx.fillStyle = 'rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(0,17,17,6,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = palettes.chef; ctx.beginPath(); ctx.arc(0,2,14,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#9ba7b2'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(-8,-12,8,0,Math.PI*2); ctx.arc(0,-16,9,0,Math.PI*2); ctx.arc(9,-11,8,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#d46136'; ctx.beginPath(); ctx.arc(5,1,2.5,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#42291d'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(3,-5); ctx.lineTo(7,-7); ctx.moveTo(3,7); ctx.quadraticCurveTo(8,10,12,6); ctx.stroke();
+      ctx.fillStyle = '#8c99a2'; ctx.fillRect(12,-2,18,4); ctx.fillStyle = '#e6ebee'; ctx.beginPath(); ctx.moveTo(25,-8); ctx.lineTo(34,-3); ctx.lineTo(25,6); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    };
+
+    const drawCart = (c) => {
+      ctx.save(); ctx.translate(c.x,c.y); ctx.rotate(c.angle);
+      ctx.strokeStyle = '#526879'; ctx.lineWidth = 3; ctx.strokeRect(-17,-11,29,18);
+      ctx.beginPath(); ctx.moveTo(12,-9); ctx.lineTo(20,-15); ctx.lineTo(20,-8); ctx.stroke();
+      ctx.fillStyle = palettes.blue; ctx.fillRect(-15,-9,25,4);
+      ctx.fillStyle = '#1d2c35';
+      ctx.beginPath(); ctx.arc(-10,11,4,0,Math.PI*2); ctx.arc(10,11,4,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    };
+
+    const drawMinimapLabels = () => {
+      ctx.save();
+      ctx.font = '900 10px system-ui'; ctx.textAlign = 'center';
+      const labels = chapters[chapterIndex].labels;
+      labels.forEach(l => {
+        const width = ctx.measureText(l.t).width + 14;
+        ctx.fillStyle = 'rgba(255,255,255,.72)'; roundedRect(l.x-width/2,l.y-11,width,20,3); ctx.fill();
+        ctx.fillStyle = palettes.navy; ctx.fillText(l.t,l.x,l.y+3);
+      });
+      ctx.restore();
+    };
+
+    const drawChapterBanner = () => {
+      if (chapterIntro <= 0 || state !== STATE.PLAYING) return;
+      const chapter = chapters[chapterIndex];
+      const alpha = clamp(Math.min(chapterIntro, 2.7 - chapterIntro) * 2.5, 0, 1);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = 'rgba(7,29,73,.92)';
+      roundedRect(278, 226, 404, 88, 10); ctx.fill();
+      ctx.strokeStyle = palettes.yellow; ctx.lineWidth = 4; ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = palettes.yellow; ctx.font = '900 12px system-ui';
+      ctx.fillText(chapter.kicker.toUpperCase(), 480, 251);
+      ctx.fillStyle = '#fff'; ctx.font = '1000 29px system-ui';
+      ctx.fillText(chapter.name.toUpperCase(), 480, 282);
+      ctx.fillStyle = '#dbeeff'; ctx.font = '700 11px system-ui';
+      ctx.fillText(chapter.intro, 480, 302);
+      ctx.restore();
+    };
+
+    const render = () => {
+      ctx.save();
+      const sx = shake > 0 ? rnd(-shake, shake) : 0;
+      const sy = shake > 0 ? rnd(-shake, shake) : 0;
+      ctx.translate(sx, sy);
+      drawFloor();
+      drawArrows();
+      drawMinimapLabels();
+      drawExit();
+      drawWalls();
+
+      crumbs.forEach(c => { ctx.globalAlpha = c.life / 1.2; ctx.fillStyle = '#8d5727'; ctx.fillRect(c.x, c.y, c.size, c.size); });
+      ctx.globalAlpha = 1;
+      packs.forEach(drawPack);
+      carts.forEach(drawCart);
+      enemies.forEach(drawChef);
+      drawPotato();
+
+      particles.forEach(p => { ctx.globalAlpha = clamp(p.life * 2, 0, 1); ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); });
+      ctx.globalAlpha = 1;
+      floaters.forEach(f => {
+        ctx.globalAlpha = clamp(f.life * 2, 0, 1);
+        ctx.font = '1000 16px system-ui'; ctx.textAlign = 'center';
+        ctx.strokeStyle = palettes.navy; ctx.lineWidth = 5; ctx.strokeText(f.text, f.x, f.y);
+        ctx.fillStyle = f.color; ctx.fillText(f.text, f.x, f.y);
+      });
+      ctx.globalAlpha = 1;
+      ctx.restore();
+
+      drawChapterBanner();
+
+      if (flash > 0) { ctx.fillStyle = `rgba(255,60,40,${flash * .35})`; ctx.fillRect(0,0,W,H); }
+    };
+
+    const frame = (now) => {
+      const dt = Math.min(.034, (now - last) / 1000 || 0);
+      last = now;
+      update(dt);
+      render();
+      requestAnimationFrame(frame);
+    };
+
+    const localPoint = (event) => {
+      const rect = canvas.getBoundingClientRect();
+      return { x: (event.clientX - rect.left) * W / rect.width, y: (event.clientY - rect.top) * H / rect.height };
+    };
+
+    window.addEventListener('keydown', event => {
+      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(event.code)) event.preventDefault();
+      keys.add(event.code);
+      initAudio();
+      if (event.code === 'Space' && !event.repeat) dash();
+      if ((event.code === 'Enter' || event.code === 'Space') && state === STATE.IDLE) startRun();
+      else if ((event.code === 'Enter' || event.code === 'Space') && state === STATE.GAMEOVER) handleResultAction();
+    });
+    window.addEventListener('keyup', event => keys.delete(event.code));
+    window.addEventListener('blur', () => keys.clear());
+
+    canvas.addEventListener('pointerdown', event => {
+      if (state !== STATE.PLAYING) return;
+      initAudio();
+      const p = localPoint(event);
+      if (p.x > W * .68) { dash(); return; }
+      pointer.active = true; pointer.id = event.pointerId;
+      pointer.startX = p.x; pointer.startY = p.y; pointer.x = p.x; pointer.y = p.y;
+      const shellRect = gameShell.getBoundingClientRect();
+      const canvasRect = canvas.getBoundingClientRect();
+      const padSize = 112;
+      const edgeGap = 8;
+      const canvasTop = canvasRect.top - shellRect.top;
+      const padLeft = clamp(
+        event.clientX - shellRect.left - padSize / 2,
+        edgeGap,
+        shellRect.width - padSize - edgeGap
+      );
+      const padTop = clamp(
+        event.clientY - shellRect.top - padSize / 2,
+        canvasTop + edgeGap,
+        shellRect.height - padSize - edgeGap
+      );
+      touchPad.style.left = `${padLeft}px`;
+      touchPad.style.top = `${padTop}px`;
+      touchPad.style.bottom = 'auto';
+      try { canvas.setPointerCapture(event.pointerId); } catch (_) { /* no-op */ }
+    });
+    canvas.addEventListener('pointermove', event => {
+      if (!pointer.active || pointer.id !== event.pointerId) return;
+      const p = localPoint(event); pointer.x = p.x; pointer.y = p.y;
+      const dx = clamp((p.x - pointer.startX) * canvas.clientWidth / W, -34, 34);
+      const dy = clamp((p.y - pointer.startY) * canvas.clientHeight / H, -34, 34);
+      stick.style.transform = `translate(${dx}px, ${dy}px)`;
+    });
+    const releasePointer = event => {
+      if (pointer.id !== event.pointerId) return;
+      pointer.active = false; pointer.id = null; stick.style.transform = 'translate(0,0)';
+    };
+    canvas.addEventListener('pointerup', releasePointer);
+    canvas.addEventListener('pointercancel', releasePointer);
+
+    document.querySelector('#startBtn').addEventListener('click', startRun);
+    document.querySelector('#retryBtn').addEventListener('click', handleResultAction);
+
+    loadChapter();
+    requestAnimationFrame(frame);
+  })();
+  </script>
+</body>
+</html>
