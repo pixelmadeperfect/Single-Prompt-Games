@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+  <meta name="theme-color" content="#081f38">
+  <meta name="description" content="Guide lost ships home in a tiny, complete lighthouse adventure.">
+  <title>The Lighthouse That Walked</title>
+  <link rel="stylesheet" href="styles.css?v=15">
+</head>
+<body>
+  <main class="game-shell" id="gameShell" aria-label="The Lighthouse That Walked game">
+    <canvas id="game" width="960" height="540" aria-label="Game world"></canvas>
+
+    <section class="hud hidden" id="hud" aria-live="polite">
+      <div class="act-badge">
+        <span id="actNumber">ACT I</span>
+        <strong id="actName">FIRST LIGHT</strong>
+      </div>
+      <div class="objective-card">
+        <span id="objectiveText">Guide the fishing boats home</span>
+        <div class="progress-track"><i id="objectiveProgress"></i></div>
+      </div>
+      <div class="hud-actions">
+        <button class="icon-button" id="muteButton" aria-label="Mute audio" title="Mute audio">♪</button>
+        <button class="icon-button" id="pauseButton" aria-label="Pause game" title="Pause game">Ⅱ</button>
+      </div>
+    </section>
+
+    <div class="toast" id="toast" aria-live="assertive"></div>
+
+    <section class="overlay title-overlay" id="titleOverlay">
+      <div class="title-sky" aria-hidden="true">
+        <i class="title-moon"></i>
+        <i class="title-beam"></i>
+      </div>
+      <div class="panel title-panel">
+        <p class="eyebrow">A TINY RESCUE ADVENTURE</p>
+        <h1>THE LIGHTHOUSE<br><em>THAT WALKED</em></h1>
+        <p class="tagline">When the sea lost its way, one little light stepped forward.</p>
+        <button class="primary-button" id="startButton">BEGIN THE JOURNEY</button>
+        <button class="text-button" id="titleSettingsButton">SETTINGS</button>
+        <p class="controls-hint">Move with the joystick or <b>A D</b> · Aim with touch or pointer</p>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="saveOverlay" role="dialog" aria-modal="true" aria-labelledby="saveTitle">
+      <div class="panel modal-panel">
+        <p class="eyebrow">A LIGHT IS STILL BURNING</p>
+        <h2 id="saveTitle">Welcome back, Keeper</h2>
+        <p id="saveSummary">Continue from Act II?</p>
+        <div class="button-row">
+          <button class="primary-button" id="continueButton">CONTINUE</button>
+          <button class="secondary-button" id="startOverButton">START OVER</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="confirmOverlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="panel modal-panel danger-panel">
+        <p class="eyebrow">EXTINGUISH THE OLD LIGHT?</p>
+        <h2 id="confirmTitle">Start a new journey?</h2>
+        <p>Your saved progress will be cleared. Audio and accessibility settings will stay.</p>
+        <div class="button-row">
+          <button class="danger-button" id="confirmResetButton">YES, START OVER</button>
+          <button class="secondary-button" id="cancelResetButton">KEEP MY SAVE</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="overlay chapter-overlay hidden" id="chapterOverlay">
+      <div class="chapter-card">
+        <p id="chapterAct">ACT I</p>
+        <h2 id="chapterTitle">FIRST LIGHT</h2>
+        <div class="chapter-rule"></div>
+        <button class="primary-button" id="chapterButton">CONTINUE</button>
+      </div>
+    </section>
+
+    <aside class="act-dialogue hidden" id="actDialogue" aria-live="polite" aria-label="Act briefing">
+      <div class="dialogue-portrait mara" id="dialoguePortrait" aria-hidden="true">
+        <i class="portrait-head"></i>
+        <i class="portrait-body"></i>
+      </div>
+      <div class="dialogue-speech">
+        <strong id="dialogueSpeaker">MARA · HARBOR KEEPER</strong>
+        <p id="dialogueText">The fishing fleet needs a safe route home.</p>
+        <button class="primary-button" id="dialogueButton">LIGHT THE WAY</button>
+      </div>
+    </aside>
+
+    <section class="overlay hidden" id="pauseOverlay" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+      <div class="panel modal-panel pause-panel">
+        <p class="eyebrow">THE SEA IS WAITING</p>
+        <h2 id="pauseTitle">Journey Paused</h2>
+        <button class="primary-button" id="resumeButton">RETURN TO THE LIGHT</button>
+        <div class="settings-grid">
+          <label for="volumeSlider">Volume <output id="volumeOutput">100%</output></label>
+          <input id="volumeSlider" type="range" min="0" max="100" value="100">
+          <label class="toggle-row" for="motionToggle">
+            <span>Gentle motion</span>
+            <input id="motionToggle" type="checkbox">
+          </label>
+        </div>
+        <button class="secondary-button" id="restartActButton">RESTART THIS ACT</button>
+        <button class="text-button" id="quitButton">RETURN TO TITLE</button>
+      </div>
+    </section>
+
+    <section class="overlay hidden" id="completeOverlay" role="dialog" aria-modal="true" aria-labelledby="completeTitle">
+      <div class="panel complete-panel">
+        <p class="eyebrow">DAWN FINDS EVERYONE HOME</p>
+        <h2 id="completeTitle">The Sea Remembers</h2>
+        <p>The little lighthouse walked where no lighthouse had walked before—and every light answered.</p>
+        <div class="journey-stats">
+          <div><strong id="boatsStat">0</strong><span>ships guided</span></div>
+          <div><strong id="lightsStat">0</strong><span>lights united</span></div>
+          <div><strong id="timeStat">0:00</strong><span>journey time</span></div>
+        </div>
+        <div class="button-row">
+          <button class="primary-button" id="replayButton">WALK AGAIN</button>
+          <button class="secondary-button" id="titleButton">TITLE</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="settings-drawer hidden" id="settingsDrawer" role="dialog" aria-modal="true" aria-label="Settings">
+      <div class="panel modal-panel">
+        <h2>Settings</h2>
+        <div class="settings-grid">
+          <label for="titleVolumeSlider">Volume <output id="titleVolumeOutput">100%</output></label>
+          <input id="titleVolumeSlider" type="range" min="0" max="100" value="100">
+          <label class="toggle-row" for="titleMotionToggle">
+            <span>Gentle motion</span>
+            <input id="titleMotionToggle" type="checkbox">
+          </label>
+        </div>
+        <button class="primary-button" id="closeSettingsButton">DONE</button>
+      </div>
+    </section>
+
+    <section class="rotate-overlay" id="rotateOverlay">
+      <div class="rotate-device" aria-hidden="true"><i></i></div>
+      <h2>Turn Toward the Horizon</h2>
+      <p>This journey is made for landscape play.</p>
+    </section>
+  </main>
+
+  <section class="touch-controls hidden" id="touchControls" aria-label="Touch controls">
+    <div class="movement-control" id="movementControl" role="application" aria-label="Drag the joystick to walk left or right">
+      <span class="movement-stick" id="movementStick"></span>
+      <small>MOVE</small>
+    </div>
+    <div class="beam-control" id="beamControl" role="application" aria-label="Drag to aim the lighthouse beam">
+      <span class="beam-stick" id="beamStick"></span>
+      <small>AIM</small>
+    </div>
+  </section>
+
+  <script defer src="game.js?v=29"></script>
+</body>
+</html>
