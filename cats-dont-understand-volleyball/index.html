@@ -19,8 +19,8 @@
         <span><b id="setLabel">SET 1</b><i id="rallyLabel">RALLY 0</i></span>
         <div><small id="rivalName">PIGEONS</small><strong id="rivalScore">0</strong></div>
       </div>
-      <div class="zoomies-wrap">
-        <span>ZOOMIES · <b id="activeCatName">MISO</b> SELECTED</span>
+      <div id="spikeMeter" class="zoomies-wrap">
+        <span><i id="powerState">MEOW SPIKE</i> · <b id="activeCatName">MISO</b> SELECTED</span>
         <div class="zoomies-track"><i id="zoomiesFill"></i></div>
       </div>
       <div class="hud-buttons">
@@ -33,7 +33,16 @@
     <div id="chaosRules" class="chaos-rules hidden" aria-live="polite"></div>
 
     <div id="callout" class="callout" aria-live="assertive"></div>
-    <div id="hint" class="hint hidden">DRAG LEFT/RIGHT TO MOVE · TAP TO POUNCE · TAP AGAIN TO SMASH</div>
+    <div id="matchMoment" class="match-moment" aria-live="assertive" aria-hidden="true">
+      <small id="momentEyebrow">LINEUP CHANGE</small>
+      <strong id="momentTitle">LUNA JOINS!</strong>
+      <span id="momentText">She believes the net is a curtain.</span>
+    </div>
+    <div id="hint" class="hint hidden">FOLLOW THE LANDING PAW · TAP TO POUNCE · TAP AGAIN TO SMASH</div>
+    <div id="opponentCheat" class="opponent-cheat hidden" aria-live="assertive">
+      <span id="cheatIcon">!</span>
+      <div><b id="cheatTitle">RIVALS ARE CHEATING</b><small id="cheatText">Suspicious snack incoming</small></div>
+    </div>
 
     <section id="titleOverlay" class="overlay title-overlay">
       <div class="title-art" aria-hidden="true">
@@ -46,11 +55,38 @@
         <p class="eyebrow">THE REGIONAL FELINE SPORTS INCIDENT</p>
         <h1>CATS DON’T<br><em>UNDERSTAND</em><br>VOLLEYBALL</h1>
         <p class="tagline">They think every serve is prey and every formation needs more pouncing.</p>
-        <button id="startButton" class="primary-button">START COACHING</button>
-        <button id="endlessButton" class="secondary-button hidden">RALLY MODE</button>
-        <button id="chaosButton" class="chaos-button hidden">CHAOTIC MODE</button>
-        <button id="settingsButton" class="text-button">SETTINGS</button>
-        <p class="controls-note">Drag left/right or hold <b>A D</b> to move · Tap to pounce · Tap a teammate or press <b>Q</b> to switch</p>
+        <div class="mode-buttons">
+          <button id="startButton" class="primary-button">CHAMPIONSHIP</button>
+          <button id="endlessButton" class="secondary-button">RALLY MODE</button>
+          <button id="chaosButton" class="chaos-button">CHAOTIC MODE</button>
+        </div>
+        <div class="title-tools">
+          <button id="controlsButton" class="text-button">CONTROLS</button>
+          <button id="settingsButton" class="text-button">SETTINGS</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="chaosSetupOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="chaosSetupTitle">
+      <div class="panel chaos-setup-panel">
+        <p class="eyebrow">CHOOSE YOUR BAD DECISION</p>
+        <h2 id="chaosSetupTitle">How Many Balls?</h2>
+        <p>Every option still includes rotating cat rules. More balls means less time for anyone to pretend this is volleyball.</p>
+        <div class="ball-choices" role="group" aria-label="Number of balls in Chaotic Mode">
+          <button type="button" data-chaos-balls="1" aria-pressed="false">
+            <span class="ball-preview">●</span><strong>1 BALL</strong><small>CALMISH</small>
+          </button>
+          <button type="button" data-chaos-balls="2" aria-pressed="true">
+            <span class="ball-preview">● ●</span><strong>2 BALLS</strong><small>RECOMMENDED</small>
+          </button>
+          <button type="button" data-chaos-balls="3" aria-pressed="false">
+            <span class="ball-preview">● ● ●</span><strong>3 BALLS</strong><small>FERAL</small>
+          </button>
+        </div>
+        <div class="button-row">
+          <button id="startChaosButton" class="chaos-button">RELEASE THE BALLS</button>
+          <button id="cancelChaosButton" class="secondary-button">BACK</button>
+        </div>
       </div>
     </section>
 
@@ -73,7 +109,6 @@
         <label class="range-label" for="volumeSlider">Volume <output id="volumeOutput">80%</output></label>
         <input id="volumeSlider" type="range" min="0" max="100" value="80">
         <label class="toggle"><span>Gentle camera motion</span><input id="motionToggle" type="checkbox"></label>
-        <label class="select-row" for="chaosBallSelect"><span>Chaotic Mode balls</span><select id="chaosBallSelect"><option value="1">1 ball</option><option value="2">2 balls</option><option value="3">3 balls</option></select></label>
         <button id="restartButton" class="secondary-button">RESTART SET</button>
         <button id="quitButton" class="text-button">RETURN TO TITLE</button>
       </div>
@@ -86,10 +121,17 @@
         <p id="resultsText">But the ball crossed the net, and the judges are technically required to count it.</p>
         <div class="stats">
           <div><strong id="statRally">0</strong><span>best rally</span></div>
-          <div><strong id="statPounces">0</strong><span>pounces</span></div>
+          <div><strong id="statPerfect">0</strong><span>perfect contacts</span></div>
+          <div><strong id="statCombos">0</strong><span>accidental plays</span></div>
+          <div><strong id="statSmashes">0</strong><span>smashes</span></div>
+          <div><strong id="statBlocks">0</strong><span>blocks</span></div>
           <div><strong id="statStyle">C</strong><span>coach grade</span></div>
         </div>
-        <button id="resultsButton" class="primary-button">CONTINUE</button>
+        <p id="resultsNote" class="results-note">Miso remains convinced the ball is prey.</p>
+        <div class="button-row">
+          <button id="resultsButton" class="primary-button">CONTINUE</button>
+          <button id="resultsTitleButton" class="secondary-button">BACK TO TITLE</button>
+        </div>
       </div>
     </section>
 
@@ -106,9 +148,7 @@
           <div><strong id="finalTime">0:00</strong><span>coach time</span></div>
         </div>
         <div class="button-row">
-          <button id="rallyButton" class="primary-button">PLAY RALLY MODE</button>
-          <button id="finalChaosButton" class="chaos-button">CHAOTIC MODE</button>
-          <button id="replayButton" class="secondary-button">REPLAY CHAMPIONSHIP</button>
+          <button id="finalTitleButton" class="primary-button">BACK TO TITLE</button>
         </div>
       </div>
     </section>
@@ -120,8 +160,40 @@
         <label class="range-label" for="titleVolumeSlider">Volume <output id="titleVolumeOutput">80%</output></label>
         <input id="titleVolumeSlider" type="range" min="0" max="100" value="80">
         <label class="toggle"><span>Gentle camera motion</span><input id="titleMotionToggle" type="checkbox"></label>
-        <label class="select-row" for="titleChaosBallSelect"><span>Chaotic Mode balls</span><select id="titleChaosBallSelect"><option value="1">1 ball</option><option value="2">2 balls</option><option value="3">3 balls</option></select></label>
         <button id="closeSettingsButton" class="primary-button">DONE</button>
+      </div>
+    </section>
+
+    <section id="controlsOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="controlsTitle">
+      <div class="panel controls-panel">
+        <p class="eyebrow">THE COACH’S CLIPBOARD</p>
+        <h2 id="controlsTitle">How to Herd the Team</h2>
+        <div class="controls-grid">
+          <article>
+            <h3>Touch Controls</h3>
+            <ul>
+              <li><b>Move:</b> drag left or right anywhere on the court.</li>
+              <li><b>Pounce:</b> tap the court. A second finger can tap while the first keeps moving.</li>
+              <li><b>Smash:</b> tap again while airborne and close to a high ball.</li>
+              <li><b>Block:</b> pounce at the net as an opponent’s shot arrives.</li>
+              <li><b>Switch:</b> tap a teammate or the <b>↻ CAT</b> button.</li>
+            </ul>
+          </article>
+          <article>
+            <h3>Desktop Controls</h3>
+            <ul>
+              <li><b>Move:</b> hold <kbd>A</kbd>/<kbd>D</kbd> or <kbd>←</kbd>/<kbd>→</kbd>. Mouse dragging also works.</li>
+              <li><b>Pounce / Smash:</b> <kbd>Space</kbd>, <kbd>W</kbd>, <kbd>↑</kbd>, or left-click the court.</li>
+              <li><b>Switch:</b> <kbd>Q</kbd>, <kbd>Tab</kbd>, click a teammate, or use <b>↻ CAT</b>.</li>
+              <li><b>Pause:</b> <kbd>Esc</kbd> or the pause button.</li>
+            </ul>
+          </article>
+        </div>
+        <div class="controls-cues">
+          <b>READ THE COURT</b>
+          <span>The landing paw predicts the ball. Clean hits, blocks, and accidental setups build MEOW SPIKE; mistakes drain it. At 100%, ULTRA locks in until your next smash. Stronger rivals may throw suspicious food—watch the warning banner.</span>
+        </div>
+        <button id="closeControlsButton" class="primary-button">GOT IT, PROBABLY</button>
       </div>
     </section>
 
