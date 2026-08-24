@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#17152c">
+  <meta name="description" content="Coach three enthusiastic cats through a tiny, extremely unofficial volleyball championship.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐈</text></svg>">
+  <title>Cats Don’t Understand Volleyball</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="gameShell" class="game-shell" aria-label="Cats Don't Understand Volleyball game">
+    <canvas id="game" width="960" height="540" aria-label="Cat volleyball court"></canvas>
+
+    <section id="hud" class="hud hidden" aria-live="polite">
+      <div class="scoreboard">
+        <div><small>CATS</small><strong id="catScore">0</strong></div>
+        <span><b id="setLabel">SET 1</b><i id="rallyLabel">RALLY 0</i></span>
+        <div><small id="rivalName">PIGEONS</small><strong id="rivalScore">0</strong></div>
+      </div>
+      <div class="zoomies-wrap">
+        <span>ZOOMIES · <b id="activeCatName">MISO</b> SELECTED</span>
+        <div class="zoomies-track"><i id="zoomiesFill"></i></div>
+      </div>
+      <div class="hud-buttons">
+        <button id="switchButton" class="icon-button switch-button" aria-label="Switch controlled cat">↻<small>CAT</small></button>
+        <button id="muteButton" class="icon-button" aria-label="Mute audio">♪</button>
+        <button id="pauseButton" class="icon-button" aria-label="Pause game">Ⅱ</button>
+      </div>
+    </section>
+
+    <div id="chaosRules" class="chaos-rules hidden" aria-live="polite"></div>
+
+    <div id="callout" class="callout" aria-live="assertive"></div>
+    <div id="hint" class="hint hidden">DRAG LEFT/RIGHT TO MOVE · TAP TO POUNCE · TAP AGAIN TO SMASH</div>
+
+    <section id="titleOverlay" class="overlay title-overlay">
+      <div class="title-art" aria-hidden="true">
+        <div class="ball-art"><i></i><i></i><i></i></div>
+        <div class="cat-art cat-a"><i class="ear"></i><i class="ear"></i><b>•ᴗ•</b></div>
+        <div class="cat-art cat-b"><i class="ear"></i><i class="ear"></i><b>•ﻌ•</b></div>
+        <div class="net-art"></div>
+      </div>
+      <div class="title-copy">
+        <p class="eyebrow">THE REGIONAL FELINE SPORTS INCIDENT</p>
+        <h1>CATS DON’T<br><em>UNDERSTAND</em><br>VOLLEYBALL</h1>
+        <p class="tagline">They think every serve is prey and every formation needs more pouncing.</p>
+        <button id="startButton" class="primary-button">START COACHING</button>
+        <button id="endlessButton" class="secondary-button hidden">RALLY MODE</button>
+        <button id="chaosButton" class="chaos-button hidden">CHAOTIC MODE</button>
+        <button id="settingsButton" class="text-button">SETTINGS</button>
+        <p class="controls-note">Drag left/right or hold <b>A D</b> to move · Tap to pounce · Tap a teammate or press <b>Q</b> to switch</p>
+      </div>
+    </section>
+
+    <section id="briefOverlay" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="panel brief-panel">
+        <p id="briefEyebrow" class="eyebrow">SET ONE</p>
+        <h2 id="briefTitle">BALL IS PREY</h2>
+        <div id="briefMascot" class="brief-mascot">ฅ^•ﻌ•^ฅ</div>
+        <p id="briefText">Drag left or right to move Miso directly, then tap anywhere to pounce the ball over the net.</p>
+        <div class="rule-card"><span id="briefRuleIcon">●</span><p id="briefRule">First to 3 points. The ball may touch your side once.</p></div>
+        <button id="briefButton" class="primary-button">I BELIEVE IN MISO</button>
+      </div>
+    </section>
+
+    <section id="pauseOverlay" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="panel modal-panel">
+        <p class="eyebrow">OFFICIAL CAT NAP</p>
+        <h2>Game Paused</h2>
+        <button id="resumeButton" class="primary-button">BACK TO THE COURT</button>
+        <label class="range-label" for="volumeSlider">Volume <output id="volumeOutput">80%</output></label>
+        <input id="volumeSlider" type="range" min="0" max="100" value="80">
+        <label class="toggle"><span>Gentle camera motion</span><input id="motionToggle" type="checkbox"></label>
+        <label class="select-row" for="chaosBallSelect"><span>Chaotic Mode balls</span><select id="chaosBallSelect"><option value="1">1 ball</option><option value="2">2 balls</option><option value="3">3 balls</option></select></label>
+        <button id="restartButton" class="secondary-button">RESTART SET</button>
+        <button id="quitButton" class="text-button">RETURN TO TITLE</button>
+      </div>
+    </section>
+
+    <section id="resultsOverlay" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="panel results-panel">
+        <p id="resultsEyebrow" class="eyebrow">MATCH COMPLETE</p>
+        <h2 id="resultsTitle">Miso Has Learned Nothing</h2>
+        <p id="resultsText">But the ball crossed the net, and the judges are technically required to count it.</p>
+        <div class="stats">
+          <div><strong id="statRally">0</strong><span>best rally</span></div>
+          <div><strong id="statPounces">0</strong><span>pounces</span></div>
+          <div><strong id="statStyle">C</strong><span>coach grade</span></div>
+        </div>
+        <button id="resultsButton" class="primary-button">CONTINUE</button>
+      </div>
+    </section>
+
+    <section id="finalOverlay" class="overlay final-overlay hidden" role="dialog" aria-modal="true">
+      <div class="confetti" aria-hidden="true"></div>
+      <div class="panel final-panel">
+        <p class="eyebrow">CHAMPIONS, SOMEHOW</p>
+        <h2>THEY INVENTED<br><em>CATLEYBALL</em></h2>
+        <div class="trophy-cats" aria-hidden="true"><span>ฅ^•ﻌ•^ฅ</span><b>🏆</b><span>ฅ^•ﻌ•^ฅ</span></div>
+        <p>The trophy is warm, enclosed, and exactly cat-sized. The team immediately falls asleep inside it.</p>
+        <div class="stats final-stats">
+          <div><strong id="finalRally">0</strong><span>best rally</span></div>
+          <div><strong id="finalGrade">A</strong><span>final grade</span></div>
+          <div><strong id="finalTime">0:00</strong><span>coach time</span></div>
+        </div>
+        <div class="button-row">
+          <button id="rallyButton" class="primary-button">PLAY RALLY MODE</button>
+          <button id="finalChaosButton" class="chaos-button">CHAOTIC MODE</button>
+          <button id="replayButton" class="secondary-button">REPLAY CHAMPIONSHIP</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="settingsOverlay" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="panel modal-panel">
+        <p class="eyebrow">CLUBHOUSE</p>
+        <h2>Settings</h2>
+        <label class="range-label" for="titleVolumeSlider">Volume <output id="titleVolumeOutput">80%</output></label>
+        <input id="titleVolumeSlider" type="range" min="0" max="100" value="80">
+        <label class="toggle"><span>Gentle camera motion</span><input id="titleMotionToggle" type="checkbox"></label>
+        <label class="select-row" for="titleChaosBallSelect"><span>Chaotic Mode balls</span><select id="titleChaosBallSelect"><option value="1">1 ball</option><option value="2">2 balls</option><option value="3">3 balls</option></select></label>
+        <button id="closeSettingsButton" class="primary-button">DONE</button>
+      </div>
+    </section>
+
+    <section id="confirmOverlay" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="panel modal-panel">
+        <p class="eyebrow">ABANDON THIS SET?</p>
+        <h2>Return to title?</h2>
+        <p>Your completed sets stay saved. The current set will restart.</p>
+        <div class="button-row">
+          <button id="confirmQuitButton" class="danger-button">YES, LEAVE</button>
+          <button id="cancelQuitButton" class="secondary-button">KEEP PLAYING</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="rotateOverlay" class="rotate-overlay">
+      <div class="rotate-cat">ฅ↻ﻌ↻ฅ</div>
+      <h2>Rotate the court</h2>
+      <p>Cats only misunderstand volleyball in landscape.</p>
+    </section>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
