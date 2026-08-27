@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#17152c">
   <meta name="description" content="Coach three enthusiastic cats through a tiny, extremely unofficial volleyball championship.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐈</text></svg>">
   <title>Cats Don’t Understand Volleyball</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20260828k">
 </head>
 <body>
   <main id="gameShell" class="game-shell" aria-label="Cats Don't Understand Volleyball game">
@@ -38,7 +38,7 @@
       <strong id="momentTitle">LUNA JOINS!</strong>
       <span id="momentText">She believes the net is a curtain.</span>
     </div>
-    <div id="hint" class="hint hidden">FOLLOW THE LANDING PAW · TAP TO POUNCE · TAP AGAIN TO SMASH</div>
+    <div id="hint" class="hint hidden">FOLLOW THE LANDING PAW · POUNCE TO JUMP · POUNCE AGAIN TO SMASH</div>
     <div id="opponentCheat" class="opponent-cheat hidden" aria-live="assertive">
       <span id="cheatIcon">!</span>
       <div><b id="cheatTitle">RIVALS ARE CHEATING</b><small id="cheatText">Suspicious snack incoming</small></div>
@@ -98,7 +98,7 @@
         <p id="briefEyebrow" class="eyebrow">SET ONE</p>
         <h2 id="briefTitle">BALL IS PREY</h2>
         <div id="briefMascot" class="brief-mascot">ฅ^•ﻌ•^ฅ</div>
-        <p id="briefText">Drag left or right to move Miso directly, then tap anywhere to pounce the ball over the net.</p>
+        <p id="briefText">Use the joystick to move Miso directly, then press POUNCE to jump at the ball.</p>
         <div class="rule-card"><span id="briefRuleIcon">●</span><p id="briefRule">First to 3 points. The ball may touch your side once.</p></div>
         <button id="briefButton" class="primary-button">I BELIEVE IN MISO</button>
       </div>
@@ -175,10 +175,10 @@
           <article>
             <h3>Touch Controls</h3>
             <ul>
-              <li><b>Move:</b> drag left or right anywhere on the court.</li>
-              <li><b>Pounce:</b> tap the court. A second finger can tap while the first keeps moving.</li>
-              <li><b>Smash:</b> tap again while airborne and close to a high ball.</li>
-              <li><b>Block:</b> pounce at the net as an opponent’s shot arrives.</li>
+              <li><b>Move:</b> drag the joystick left or right.</li>
+              <li><b>Pounce:</b> press POUNCE while moving—the controls support two fingers.</li>
+              <li><b>Smash:</b> press POUNCE again while airborne and close to a high ball.</li>
+              <li><b>Block:</b> press POUNCE at the net as an opponent’s shot arrives.</li>
               <li><b>Switch:</b> tap a teammate or the <b>↻ CAT</b> button.</li>
             </ul>
           </article>
@@ -212,12 +212,22 @@
       </div>
     </section>
 
-    <section id="rotateOverlay" class="rotate-overlay">
-      <div class="rotate-cat">ฅ↻ﻌ↻ฅ</div>
-      <h2>Rotate the court</h2>
-      <p>Cats only misunderstand volleyball in landscape.</p>
-    </section>
   </main>
-  <script src="game.js"></script>
+  <section id="touchControls" class="touch-controls hidden" aria-label="Touch controls">
+    <div id="moveStick" class="touch-stick" role="group" aria-label="Movement joystick">
+      <span aria-hidden="true">◀</span>
+      <div id="moveKnob" class="touch-knob" aria-hidden="true"></div>
+      <span aria-hidden="true">▶</span>
+    </div>
+    <button id="touchPounceButton" class="touch-pounce" type="button" aria-label="Pounce, smash, or block">
+      <span aria-hidden="true">↑</span><b>POUNCE</b><small>SMASH · BLOCK</small>
+    </button>
+  </section>
+  <section id="rotateOverlay" class="rotate-overlay" aria-live="polite">
+    <div class="rotate-cat">ฅ↻ﻌ↻ฅ</div>
+    <h2>Rotate the court</h2>
+    <p>Cats only misunderstand volleyball in landscape.</p>
+  </section>
+  <script src="game.js?v=20260828k"></script>
 </body>
 </html>
