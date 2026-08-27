@@ -26,19 +26,19 @@
       name: 'BALL IS PREY', eyebrow: 'CHAMPIONSHIP · OPENING LINEUP', mascot: 'ฅ^•ﻌ•^ฅ', rival: 'PIGEONS',
       text: 'Hold left or right to move Miso directly. Get under the ball, then press Space to jump at it.',
       rule: `One set, first to ${MATCH_TARGET}. Meet the ball inside the landing paw for a GOOD or PERFECT receive. Teammates may accidentally set those later.`, button: 'I BELIEVE IN MISO', cats: 1,
-      sky: ['#574d8f', '#f2a65a'], court: '#e7c68b', rivalColor: '#e4e1d6'
+      sky: ['#55bde8', '#ffe39a'], court: '#e7bd73', rivalColor: '#e4e1d6'
     },
     {
       name: 'TEAMWORK, ALLEGEDLY', eyebrow: 'CHAMPIONSHIP · DOUBLES', mascot: 'ฅ^•ﻌ•^ฅ  ฅ^•ﻌ•^ฅ', rival: 'CORGIS',
       text: 'Luna joined the team. You directly move the selected cat; Luna reads the ball and covers the open court.',
       rule: 'Switch cats with ↻ or Q. Teammates defend automatically, but only the selected cat pounces on command.', button: 'DEPLOY THE TEAM', cats: 2,
-      sky: ['#328b92', '#d9d17f'], court: '#d9b87b', rivalColor: '#d99a58'
+      sky: ['#45c4b6', '#ffe787'], court: '#e2b66d', rivalColor: '#d99a58'
     },
     {
       name: 'THE GRAND FUR-NAL', eyebrow: 'CHAMPIONSHIP · FINAL LINEUP', mascot: 'ฅ^•ﻌ•^ฅ  ฅ^•ﻌ•^ฅ  ฅ^•ﻌ•^ฅ', rival: 'PROS',
       text: 'Beans makes three. Switch between cats while your teammates cover their zones, then build MEOW SPIKE with clean hits.',
       rule: 'Perfect contacts, blocks, and accidental setups build charge. Mistakes drain it—unless ULTRA is already locked and ready.', button: 'MAKE SPORTS HISTORY', cats: 3,
-      sky: ['#19162e', '#69467c'], court: '#bd8d6d', rivalColor: '#f3f0e8'
+      sky: ['#6654b8', '#ff9f9c'], court: '#d7a56e', rivalColor: '#f3f0e8'
     }
   ];
 
@@ -205,14 +205,27 @@
       if (!this.ctx || state !== 'play' || prefs.volume <= 0) return;
       const t=this.ctx.currentTime;
       if (t < this.nextBeat) return;
-      const seq = currentSet===2 ? [110,165,147,196,110,220,165,147] : [131,196,165,220,131,247,196,165];
-      const note=seq[this.musicStep%seq.length];
-      this.tone(note,.16,'triangle',.07,-8);
-      if(this.musicStep%2===0){this.tone(note*2,.09,'sine',.055,18);this.tone(62,.07,'sine',.13,-25);}
-      else this.noise(.045,.035,3600,'highpass');
-      if(this.musicStep%8===6)this.tone(note*3,.12,'square',.028,-55);
-      if(this.musicStep%16===0)this.noise(.7,.018,520);
-      this.musicStep++; this.nextBeat=t+.28;
+      const step=this.musicStep%16,phrase=Math.floor(this.musicStep/16)%4,cycle=Math.floor(this.musicStep/64)%2;
+      const transpose=[1,1.122,1.26][Math.min(2,currentSet)];
+      const phrases=[
+        [523,659,784,880,784,659,587,659,698,880,1047,880,784,698,659,587],
+        [659,784,880,784,698,659,523,587,784,880,988,880,784,659,587,659],
+        [784,880,1047,1175,1047,880,784,698,659,784,880,784,698,659,587,523],
+        [523,0,659,0,698,784,0,659,587,0,698,0,659,587,523,0]
+      ];
+      const progressions=[[131,175,147,196],[131,165,175,196],[175,147,131,196],[147,175,196,131]];
+      const rawNote=phrases[phrase][step],note=rawNote*transpose*(cycle&&phrase===1?1.059:1),root=progressions[phrase][Math.floor(step/4)]*transpose;
+      // Marimba-like lead and tiny answering sparkle: upbeat, but deliberately below gameplay impacts.
+      if(rawNote)this.tone(note,phrase===2?.14:.115,phrase===1?'sine':'triangle',chaotic?.042:.048,-16);
+      if(rawNote&&step%2===1&&phrase!==3)this.tone(note*2,.055,'sine',.014,-24);
+      // A sunny four-chord bounce with alternating beach percussion.
+      if(step%4===0){this.tone(root,phrase===3?.24:.18,'triangle',.065,-12);if(phrase!==3)this.tone(root*2.5,.13,'sine',.025,12);this.tone(78,.075,'sine',.085,-32);}
+      if(step%4===2&&phrase!==3)this.tone(root*1.5,.09,'triangle',.032,-18);
+      if(step%2===1)this.noise(.035,chaotic?.026:.021,phrase===2?5100:4300,'highpass');
+      if(step===6||step===14){this.tone(205,.055,'sine',.045,35);this.noise(.025,.018,1800,'bandpass');}
+      if(chaotic&&rawNote&&(step===3||step===11))this.tone(note*.5,.075,'square',.018,45);
+      if(phrase===3&&step===15){this.tone(523*transpose,.12,'triangle',.045,180);this.tone(659*transpose,.12,'triangle',.035,150);}
+      this.musicStep++;this.nextBeat=t+(chaotic?.205:.23);
     }
   }
   audio = new Sound();
@@ -767,21 +780,29 @@
     ctx.restore();
   }
   function drawBackground(t,s){
-    // saturated seaside arena, with a night-lit championship variant
-    const night=currentSet===2;
-    ctx.fillStyle=night?'#173957':'#2d9fca';ctx.fillRect(0,145,W,165);
-    ctx.fillStyle=night?'#a9d9dc':'#dff9f0';ctx.globalAlpha=.7;for(let i=0;i<7;i++){ctx.fillRect(0,171+i*19,W,3);ctx.beginPath();ctx.arc((i*167+t*12)%W,176+i*18,42,Math.PI,0);ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=3;ctx.stroke();}ctx.globalAlpha=1;
-    // sun, clouds and distant islands
-    ctx.fillStyle=night?'#fff4d6':'#ffc857';ctx.beginPath();ctx.arc(790,82,night?28:45,0,7);ctx.fill();
-    if(night){ctx.fillStyle=s.sky[0];ctx.beginPath();ctx.arc(804,72,25,0,7);ctx.fill();}
-    ctx.fillStyle='#fff4d6cc';for(const c of [[120,79,1],[410,105,.72]]){ctx.save();ctx.translate(c[0],c[1]);ctx.scale(c[2],c[2]);ellipse(0,0,43,15,false);ellipse(-32,3,25,11,false);ellipse(30,4,29,12,false);ctx.restore();}
-    ctx.fillStyle=night?'#274f58':'#3f9767';ctx.beginPath();ctx.moveTo(0,230);ctx.quadraticCurveTo(82,164,175,230);ctx.quadraticCurveTo(260,187,340,230);ctx.lineTo(340,280);ctx.lineTo(0,280);ctx.fill();ctx.beginPath();ctx.moveTo(720,236);ctx.quadraticCurveTo(830,153,960,226);ctx.lineTo(960,280);ctx.lineTo(720,280);ctx.fill();
-    // compact beach crowd behind the court
-    ctx.fillStyle='#17152c66';ctx.fillRect(0,270,W,66);
-    for(let i=0;i<38;i++){const x=i*27-8,y=302+(i%2)*10;ctx.fillStyle=i%5===0?'#ffc857':i%3===0?'#ff715b':'#fff4d6';ctx.beginPath();ctx.arc(x,y-17-(Math.sin(t*2+i)*1.5),9,0,7);ctx.fill();ctx.fillRect(x-9,y-10,18,22);}
-    // palms frame the arcade court
-    for(const flip of [0,1]){ctx.save();ctx.translate(flip?925:35,295);ctx.scale(flip?-1:1,1);ctx.strokeStyle='#70462f';ctx.lineWidth=11;ctx.beginPath();ctx.moveTo(0,35);ctx.quadraticCurveTo(8,-55,25,-112);ctx.stroke();ctx.strokeStyle=night?'#3a7d68':'#2f9d67';ctx.lineWidth=12;for(let a=-1.5;a<1.6;a+=.5){ctx.beginPath();ctx.moveTo(25,-112);ctx.quadraticCurveTo(50+Math.cos(a)*35,-125+Math.sin(a)*15,72+Math.cos(a)*45,-105+Math.sin(a)*25);ctx.stroke();}ctx.restore();}
-    const banners=['CHASE','POUNCE','NAP LATER'];for(let i=0;i<3;i++){ctx.fillStyle=['#63d6b6','#ffc857','#ff715b'][i];ctx.beginPath();ctx.roundRect(70+i*325,239,145,34,8);ctx.fill();ctx.fillStyle='#17152c';ctx.font='1000 13px system-ui';ctx.textAlign='center';ctx.fillText(banners[i],142+i*325,261);}
+    // A bright cat-beach carnival. The center stays simple so the ball remains readable.
+    const sunset=currentSet===2;
+    ctx.fillStyle=sunset?'#2788b8':'#26a9d0';ctx.fillRect(0,145,W,165);
+    const seaGlow=ctx.createLinearGradient(0,145,0,310);seaGlow.addColorStop(0,sunset?'#45b8cf':'#56d6d0');seaGlow.addColorStop(1,sunset?'#206f9d':'#258caf');ctx.fillStyle=seaGlow;ctx.fillRect(0,145,W,165);
+    ctx.strokeStyle='#e9fff2';ctx.lineWidth=3;ctx.globalAlpha=.62;for(let i=0;i<6;i++){const y=170+i*22;ctx.beginPath();for(let x=-70;x<W+80;x+=92){ctx.moveTo(x+(t*10+i*17)%92,y);ctx.quadraticCurveTo(x+23+(t*10+i*17)%92,y-8,x+46+(t*10+i*17)%92,y);ctx.quadraticCurveTo(x+69+(t*10+i*17)%92,y+8,x+92+(t*10+i*17)%92,y);}ctx.stroke();}ctx.globalAlpha=1;
+    // The sun is taking the match far more seriously than anyone else.
+    ctx.save();ctx.translate(810,82);ctx.fillStyle='#ffc857';ctx.strokeStyle='#17152c';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-32,-24);ctx.lineTo(-21,-51);ctx.lineTo(-6,-34);ctx.quadraticCurveTo(8,-39,23,-31);ctx.lineTo(39,-49);ctx.lineTo(36,-17);ctx.arc(2,1,42,-.45,Math.PI*2-.12);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#17152c';ctx.beginPath();ctx.arc(-11,-1,4,0,7);ctx.arc(17,-1,4,0,7);ctx.fill();ctx.strokeStyle='#17152c';ctx.lineWidth=3;ctx.beginPath();ctx.arc(3,9,10,.15,Math.PI-.15);ctx.stroke();ctx.restore();
+    // Paw-shaped clouds live at the edges, outside the usual rally arc.
+    ctx.fillStyle='#fffaf0df';for(const c of [[105,77,1],[390,104,.68]]){ctx.save();ctx.translate(c[0],c[1]);ctx.scale(c[2],c[2]);ellipse(0,8,34,20,false);ellipse(-30,-8,13,16,false);ellipse(-10,-20,14,17,false);ellipse(13,-21,14,17,false);ellipse(34,-7,13,16,false);ctx.restore();}
+    ctx.fillStyle=sunset?'#39796f':'#43a56e';ctx.beginPath();ctx.moveTo(0,230);ctx.quadraticCurveTo(82,164,175,230);ctx.quadraticCurveTo(260,187,340,230);ctx.lineTo(340,280);ctx.lineTo(0,280);ctx.fill();ctx.beginPath();ctx.moveTo(720,236);ctx.quadraticCurveTo(830,153,960,226);ctx.lineTo(960,280);ctx.lineTo(720,280);ctx.fill();
+    // Festival crowd: cat ears, staggered swaying, and occasional tiny paw-waves.
+    ctx.fillStyle='#342c5ccc';ctx.fillRect(0,270,W,66);
+    const fanColors=['#ffc857','#ff715b','#fff4d6','#5dd6b5','#9f7aea'];
+    for(let i=0;i<38;i++){const baseX=i*27-8,y=302+(i%2)*10,bob=Math.sin(t*2+i*.83)*2,sway=Math.sin(t*1.35+i*.61)*2.2,x=baseX+sway,waving=(i+Math.floor(t*1.6))%11===0;ctx.fillStyle=fanColors[i%fanColors.length];ctx.fillRect(x-9,y-10+bob*.3,18,22);ctx.beginPath();ctx.moveTo(x-9,y-22-bob);ctx.lineTo(x-5+sway*.2,y-34-bob);ctx.lineTo(x+1,y-25-bob);ctx.lineTo(x+7-sway*.2,y-34-bob);ctx.lineTo(x+10,y-20-bob);ctx.arc(x,y-17-bob,10,0,7);ctx.fill();ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x-7,y-4);ctx.lineTo(x-14-sway,y+(waving?-24:5));ctx.moveTo(x+7,y-4);ctx.lineTo(x+14+sway,y+(waving?-20:5));ctx.stroke();}
+    // Palms frame the action and carry suspiciously cat-shaped coconuts.
+    for(const flip of [0,1]){ctx.save();ctx.translate(flip?925:35,295);ctx.scale(flip?-1:1,1);ctx.strokeStyle='#8d5a38';ctx.lineWidth=11;ctx.beginPath();ctx.moveTo(0,35);ctx.quadraticCurveTo(8,-55,25,-112);ctx.stroke();ctx.strokeStyle='#37a86f';ctx.lineWidth=12;for(let a=-1.5;a<1.6;a+=.5){ctx.beginPath();ctx.moveTo(25,-112);ctx.quadraticCurveTo(50+Math.cos(a)*35,-125+Math.sin(a)*15,72+Math.cos(a)*45,-105+Math.sin(a)*25);ctx.stroke();}ctx.fillStyle='#ffc857';ctx.strokeStyle='#17152c';ctx.lineWidth=2;ctx.beginPath();ctx.arc(18,-103,7,0,7);ctx.arc(31,-105,7,0,7);ctx.fill();ctx.stroke();ctx.restore();}
+    // Arena message screens rotate independently, like tiny sports-stadium ribbon boards.
+    const boardSets=[
+      ['CHASE!','GO CATS!','BALL = PREY','TEAM MISO','NICE PAWS'],
+      [`RALLY ${rally}`,score[0]===score[1]?'TIE-ish GAME':`${score[0]} – ${score[1]}`,zoomies>=100?'ULTRA READY!':'POUNCE!',chaotic?'RULES OPTIONAL':'MEOW!','GOOD SET?'],
+      ['NAP LATER','NO HANDS!','WHO HAS RULES?','GO PROS?','TREAT BREAK?']
+    ];
+    for(let i=0;i<3;i++){const phase=t/3.2+i*.72,index=Math.floor(phase)%boardSets[i].length,fade=.72+.28*Math.abs(Math.cos((phase%1)*Math.PI)),label=boardSets[i][index];ctx.save();ctx.translate(70+i*325,239);ctx.fillStyle='#17152c';ctx.beginPath();ctx.roundRect(-3,-3,151,40,10);ctx.fill();ctx.fillStyle=['#63d6b6','#ffc857','#ff715b'][i];ctx.beginPath();ctx.roundRect(0,0,145,34,8);ctx.fill();ctx.globalAlpha=.16;ctx.fillStyle='#fff';ctx.fillRect(7,5,131,2);ctx.fillRect(7,26,131,2);ctx.globalAlpha=fade;ctx.fillStyle='#17152c';ctx.font='1000 13px system-ui';ctx.textAlign='center';ctx.fillText(label,72,22);ctx.restore();}
   }
   function drawCourt(s){
     ctx.fillStyle='#c89955';ctx.fillRect(0,328,W,H-328);
