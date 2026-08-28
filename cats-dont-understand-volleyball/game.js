@@ -466,7 +466,7 @@
     audio.init();endless=false;chaotic=true;currentSet=2;elapsedSaved=0;journeyStart=performance.now();state='play';hideAll();ui.hud.classList.remove('hidden');showGameplayControls();ui.chaosRules.classList.remove('hidden');
     resetSet();audio.sting();ui.chaosRules.classList.remove('hidden');callout(`FIRST TO ${MATCH_TARGET} · ${prefs.chaosBalls} BALL${prefs.chaosBalls===1?'':'S'}`);
   }
-  function hideAll() { [ui.title,ui.chaosSetup,ui.brief,ui.pause,ui.results,ui.final,ui.settings,ui.controls,ui.confirm,ui.touchControls].forEach(x=>x.classList.add('hidden')); ui.hud.classList.add('hidden');ui.hint.classList.add('hidden');ui.chaosRules.classList.add('hidden');ui.opponentCheat.classList.add('hidden');ui.kofiBanner.classList.add('hidden');ui.moment.classList.remove('show');ui.moment.setAttribute('aria-hidden','true');momentToken++; }
+  function hideAll() { clearTouchInputs();[ui.title,ui.chaosSetup,ui.brief,ui.pause,ui.results,ui.final,ui.settings,ui.controls,ui.confirm,ui.touchControls].forEach(x=>x.classList.add('hidden')); ui.hud.classList.add('hidden');ui.hint.classList.add('hidden');ui.chaosRules.classList.add('hidden');ui.opponentCheat.classList.add('hidden');ui.kofiBanner.classList.add('hidden');ui.moment.classList.remove('show');ui.moment.setAttribute('aria-hidden','true');momentToken++; }
   function title() { state='title';endless=false;chaotic=false;hideAll();ui.title.classList.remove('hidden');ui.kofiBanner.classList.remove('hidden');updateTitle();draw(performance.now()/1000); }
 
   function pounce() {
@@ -863,13 +863,15 @@
   function canvasPoint(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height};}
   function resetJoystickVisual(){ui.moveStick?.classList.remove('active');if(ui.moveKnob)ui.moveKnob.style.transform='translate(-50%, -50%)';}
   function updateJoystick(e){const r=ui.moveStick.getBoundingClientRect(),center=r.left+r.width/2,max=Math.max(18,r.width*.27),dx=Math.max(-max,Math.min(max,e.clientX-center));joystick.axis=Math.abs(dx)<5?0:dx/max;ui.moveKnob.style.transform=`translate(calc(-50% + ${dx}px), -50%)`;}
-  ui.moveStick.addEventListener('pointerdown',e=>{if(state!=='play'||joystick.activeId!==null)return;e.preventDefault();audio.init();joystick.activeId=e.pointerId;ui.moveStick.setPointerCapture?.(e.pointerId);ui.moveStick.classList.add('active');updateJoystick(e);});
+  ui.moveStick.addEventListener('pointerdown',e=>{if(state!=='play'||joystick.activeId!==null)return;e.preventDefault();audio.init();joystick.activeId=e.pointerId;try{ui.moveStick.setPointerCapture?.(e.pointerId);}catch(_){}ui.moveStick.classList.add('active');updateJoystick(e);});
   ui.moveStick.addEventListener('pointermove',e=>{if(e.pointerId!==joystick.activeId)return;e.preventDefault();updateJoystick(e);});
-  function releaseJoystick(e){if(e.pointerId!==joystick.activeId)return;joystick.activeId=null;joystick.axis=0;resetJoystickVisual();if(ui.moveStick.hasPointerCapture?.(e.pointerId))ui.moveStick.releasePointerCapture(e.pointerId);}
-  ui.moveStick.addEventListener('pointerup',releaseJoystick);ui.moveStick.addEventListener('pointercancel',releaseJoystick);
-  ui.touchPounceButton.addEventListener('pointerdown',e=>{if(state!=='play'||touchAction.pounceId!==null)return;e.preventDefault();audio.init();touchAction.pounceId=e.pointerId;ui.touchPounceButton.classList.add('pressed');ui.touchPounceButton.setPointerCapture?.(e.pointerId);pounce();});
-  const releasePounce=e=>{if(e.pointerId!==touchAction.pounceId)return;touchAction.pounceId=null;ui.touchPounceButton.classList.remove('pressed');if(ui.touchPounceButton.hasPointerCapture?.(e.pointerId))ui.touchPounceButton.releasePointerCapture(e.pointerId);};
-  ui.touchPounceButton.addEventListener('pointerup',releasePounce);ui.touchPounceButton.addEventListener('pointercancel',releasePounce);
+  function releaseJoystick(e,force=false){const activeId=joystick.activeId;if(activeId===null||(!force&&e?.pointerId!==activeId))return;joystick.activeId=null;joystick.axis=0;resetJoystickVisual();try{if(ui.moveStick.hasPointerCapture?.(activeId))ui.moveStick.releasePointerCapture(activeId);}catch(_){}}
+  ui.moveStick.addEventListener('pointerup',releaseJoystick);ui.moveStick.addEventListener('pointercancel',releaseJoystick);ui.moveStick.addEventListener('lostpointercapture',releaseJoystick);ui.moveStick.addEventListener('pointerleave',e=>{if(e.pointerType==='touch'&&!ui.moveStick.hasPointerCapture?.(e.pointerId))releaseJoystick(e);});
+  ui.touchPounceButton.addEventListener('pointerdown',e=>{if(state!=='play'||touchAction.pounceId!==null)return;e.preventDefault();audio.init();touchAction.pounceId=e.pointerId;ui.touchPounceButton.classList.add('pressed');try{ui.touchPounceButton.setPointerCapture?.(e.pointerId);}catch(_){}pounce();});
+  function releasePounce(e,force=false){const activeId=touchAction.pounceId;if(activeId===null||(!force&&e?.pointerId!==activeId))return;touchAction.pounceId=null;ui.touchPounceButton.classList.remove('pressed');try{if(ui.touchPounceButton.hasPointerCapture?.(activeId))ui.touchPounceButton.releasePointerCapture(activeId);}catch(_){}}
+  ui.touchPounceButton.addEventListener('pointerup',releasePounce);ui.touchPounceButton.addEventListener('pointercancel',releasePounce);ui.touchPounceButton.addEventListener('lostpointercapture',releasePounce);ui.touchPounceButton.addEventListener('pointerleave',e=>{if(e.pointerType==='touch'&&!ui.touchPounceButton.hasPointerCapture?.(e.pointerId))releasePounce(e);});
+  function clearTouchInputs(){releaseJoystick(null,true);releasePounce(null,true);}
+  window.addEventListener('pointerup',e=>{releaseJoystick(e);releasePounce(e);},true);window.addEventListener('pointercancel',e=>{releaseJoystick(e);releasePounce(e);},true);
   canvas.addEventListener('pointerdown',e=>{if(state!=='play'||(e.pointerType==='mouse'&&e.button!==0))return;e.preventDefault();audio.init();const p=canvasPoint(e);if(pointer.active&&pointer.activeId!==e.pointerId){if(!selectCatAt(p.x,p.y))pounce();return;}canvas.setPointerCapture?.(e.pointerId);pointer.startX=p.x;pointer.startY=p.y;pointer.moved=false;pointer.type=e.pointerType;pointer.axis=0;pointer.active=true;pointer.activeId=e.pointerId;});
   canvas.addEventListener('pointermove',e=>{if(state!=='play'||!pointer.active||e.pointerId!==pointer.activeId)return;const p=canvasPoint(e),dx=p.x-pointer.startX;if(Math.hypot(dx,p.y-pointer.startY)>12)pointer.moved=true;pointer.axis=Math.abs(dx)<10?0:Math.max(-1,Math.min(1,dx/65));});
   canvas.addEventListener('pointerup',e=>{if(e.pointerId!==pointer.activeId)return;if(pointer.active&&!pointer.moved){const p=canvasPoint(e);if(!selectCatAt(p.x,p.y))pounce();}pointer.axis=0;pointer.active=false;pointer.activeId=null;canvas.releasePointerCapture?.(e.pointerId);});
@@ -882,7 +884,8 @@
     zoomGuard.time=now;zoomGuard.x=touch.clientX;zoomGuard.y=touch.clientY;
   },{passive:false,capture:true});
   document.addEventListener('touchmove',e=>{if(e.touches.length>1&&e.cancelable)e.preventDefault();},{passive:false,capture:true});
-  document.addEventListener('touchend',e=>{if(performance.now()<zoomGuard.suppressUntil&&e.cancelable)e.preventDefault();},{passive:false,capture:true});
+  document.addEventListener('touchend',e=>{if(e.touches.length===0)clearTouchInputs();if(performance.now()<zoomGuard.suppressUntil&&e.cancelable)e.preventDefault();},{passive:false,capture:true});
+  document.addEventListener('touchcancel',e=>{if(e.touches.length===0)clearTouchInputs();},{passive:true,capture:true});
   document.addEventListener('dblclick',e=>e.preventDefault(),{capture:true});
   ['gesturestart','gesturechange','gestureend'].forEach(type=>document.addEventListener(type,e=>{if(e.cancelable)e.preventDefault();},{passive:false,capture:true}));
   window.addEventListener('keydown',e=>{keys.add(e.code);if(['Space','ArrowUp','KeyW'].includes(e.code)){e.preventDefault();audio.init();pounce();}if(['KeyQ','Tab'].includes(e.code)){e.preventDefault();switchCat();}if(e.code==='Escape'&&state==='play')pauseGame();else if(e.code==='Escape'&&!ui.controls.classList.contains('hidden')){ui.controls.classList.add('hidden');ui.title.classList.remove('hidden');ui.kofiBanner.classList.remove('hidden');}else if(e.code==='Escape'&&state==='chaosSetup')title();});
@@ -901,7 +904,7 @@
   function slider(id){$(id).addEventListener('input',e=>audio.volume(Number(e.target.value)/100));}slider('volumeSlider');slider('titleVolumeSlider');
   function motion(id){$(id).addEventListener('change',e=>{prefs.gentle=e.target.checked;savePrefs();});}motion('motionToggle');motion('titleMotionToggle');
   document.querySelectorAll('[data-chaos-balls]').forEach(button=>button.addEventListener('click',()=>{audio.init();audio.ui();prefs.chaosBalls=Math.max(1,Math.min(3,Number(button.dataset.chaosBalls)||2));savePrefs();}));
-  function pauseGame(){if(state!=='play')return;beforePause=state;state='pause';moveAxis=0;pointer.axis=0;pointer.active=false;pointer.activeId=null;joystick.axis=0;joystick.activeId=null;touchAction.pounceId=null;resetJoystickVisual();ui.touchPounceButton.classList.remove('pressed');keys.clear();hideAll();ui.pause.classList.remove('hidden');}
+  function pauseGame(){if(state!=='play')return;beforePause=state;state='pause';moveAxis=0;pointer.axis=0;pointer.active=false;pointer.activeId=null;clearTouchInputs();keys.clear();hideAll();ui.pause.classList.remove('hidden');}
   function resumeGame(){if(state!=='pause')return;state=beforePause;hideAll();ui.hud.classList.remove('hidden');showGameplayControls();if(chaotic)ui.chaosRules.classList.remove('hidden');renderOpponentCheat();}
 
   let viewportRaf=0;
@@ -921,9 +924,9 @@
     if(portrait&&state==='play')pauseGame();
   }
   window.addEventListener('resize',scheduleViewportSync);window.addEventListener('orientationchange',scheduleViewportSync);window.visualViewport?.addEventListener('resize',scheduleViewportSync);window.visualViewport?.addEventListener('scroll',scheduleViewportSync);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){saveGame();if(state==='play')pauseGame();}});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTouchInputs();saveGame();if(state==='play')pauseGame();}});
   window.addEventListener('pagehide',saveGame);
-  window.addEventListener('blur',()=>{if(state==='play')pauseGame();});
+  window.addEventListener('blur',()=>{clearTouchInputs();if(state==='play')pauseGame();});
   canvas.addEventListener('contextmenu',e=>e.preventDefault());
 
   let last=performance.now();
