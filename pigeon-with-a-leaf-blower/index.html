@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#10162f">
+  <meta name="description" content="A tiny game about a pigeon whose aviation license is a leaf blower.">
+  <title>Pigeon With a Leaf Blower: Absolutely Not Airworthy</title>
+  <link rel="stylesheet" href="styles.css?v=20260829e">
+</head>
+<body>
+  <main id="gameShell" class="game-shell" aria-label="Pigeon With a Leaf Blower game">
+    <canvas id="game" width="540" height="960" aria-label="Vertical flying arcade game"></canvas>
+
+    <section id="hud" class="hud hidden" aria-live="polite">
+      <div class="altitude"><small>ALTITUDE</small><strong><span id="altitudeValue">0</span>m</strong></div>
+      <div class="mission"><small id="districtLabel">LAUNDRY DISTRICT</small><b id="objectiveLabel">RECLAIM THE MAYOR'S HAT</b></div>
+      <div class="hud-actions">
+        <button id="muteButton" class="icon-button" aria-label="Mute sound">♪</button>
+        <button id="pauseButton" class="icon-button" aria-label="Pause game">Ⅱ</button>
+      </div>
+      <div class="meter battery-meter"><span>LEAF JUICE</span><i><b id="batteryFill"></b></i></div>
+      <div class="meter dignity-meter"><span>DIGNITY</span><i><b id="healthFill"></b></i></div>
+      <div id="combo" class="combo hidden"><small>CIVIC DUTY</small><strong>x<span id="comboValue">2</span></strong></div>
+    </section>
+
+    <div id="toast" class="toast" aria-live="assertive"></div>
+    <div id="pointerHint" class="pointer-hint hidden">DRAG THE WAY YOU WANT TO FLY</div>
+
+    <section id="titleOverlay" class="overlay title-overlay">
+      <div class="title-clouds" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="title-hero" aria-hidden="true">
+        <div class="gust-lines"><i></i><i></i><i></i></div>
+        <div class="blower-art"><span></span></div>
+        <div class="pigeon-art"><i></i><b>•</b><b>•</b><em>▲</em></div>
+        <div class="mayor-hat">MAYOR</div>
+      </div>
+      <div class="title-copy">
+        <p class="eyebrow">A MUNICIPAL AVIATION INCIDENT</p>
+        <h1>PIGEON<br>WITH A<br><em>LEAF BLOWER</em></h1>
+        <p class="subtitle">ABSOLUTELY NOT AIRWORTHY</p>
+        <p class="tagline">Return the Mayor’s hat. Violate several airspace regulations. Try to retain one shred of dignity.</p>
+        <button id="startButton" class="primary-button">START THE BAD IDEA</button>
+        <button id="continueButton" class="secondary-button hidden">CONTINUE FROM <span id="continueAltitude">0</span>m</button>
+        <div class="title-tools">
+          <button id="howButton" class="text-button">HOW TO FLY</button>
+          <button id="settingsButton" class="text-button">SETTINGS</button>
+        </div>
+        <div class="best-line"><span>BEST CIVIC DUTY</span><b id="bestScore">0</b></div>
+      </div>
+    </section>
+
+    <section id="briefOverlay" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="panel brief-panel">
+        <p class="eyebrow">OFFICIAL MISSION BRIEF</p>
+        <div class="brief-icon">🧢</div>
+        <h2>THE MAYOR’S HAT<br>IS ON YOUR HEAD</h2>
+        <p>City Hall is 1,500 metres up. Nobody checked that measurement. Fly there anyway.</p>
+        <div class="instruction-card">
+          <div><span>☝</span><p><b>DRAG</b> the way you want to fly.</p></div>
+          <div><span>⌁</span><p>Your blower points backward and <b>shoves obstacles away.</b></p></div>
+          <div><span>⚡</span><p>Release to refill <b>Leaf Juice.</b></p></div>
+        </div>
+        <p class="tiny-note">Keyboard: WASD or arrow keys · Release movement to recharge</p>
+        <button id="briefButton" class="primary-button">UNDERSTOOD NOTHING</button>
+      </div>
+    </section>
+
+    <section id="howOverlay" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="panel">
+        <p class="eyebrow">EXTREMELY REAL PILOT SCHOOL</p>
+        <h2>Point. Blast. Regret.</h2>
+        <div class="how-grid">
+          <article><span>1</span><h3>DRAG TO FLY</h3><p>Drag in any direction. The pigeon accelerates that way; the blower fires behind you.</p></article>
+          <article><span>2</span><h3>WEAPONISED WIND</h3><p>Push red hazards away. Blast harmless junk for points and a growing combo.</p></article>
+          <article><span>3</span><h3>PULSE THE THROTTLE</h3><p>Leaf Juice refills whenever you stop blasting. Short controlled bursts beat panic.</p></article>
+        </div>
+        <p class="tiny-note">Desktop: WASD / arrows · P pauses · M mutes</p>
+        <button id="closeHowButton" class="primary-button">LET ME FLY</button>
+      </div>
+    </section>
+
+    <section id="pauseOverlay" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="panel pause-panel">
+        <p class="eyebrow">UNSCHEDULED POWER NAP</p>
+        <h2>Paused Mid-Regret</h2>
+        <button id="resumeButton" class="primary-button">RESUME INCIDENT</button>
+        <label class="range-label" for="volumeSlider">Volume <output id="volumeOutput">75%</output></label>
+        <input id="volumeSlider" type="range" min="0" max="100" value="75">
+        <label class="toggle"><span>Gentle camera motion</span><input id="motionToggle" type="checkbox"></label>
+        <button id="restartButton" class="secondary-button">RESTART CHECKPOINT</button>
+        <button id="quitButton" class="text-button">RETURN TO TITLE</button>
+      </div>
+    </section>
+
+    <section id="crashOverlay" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="panel crash-panel">
+        <p class="eyebrow">AVIATION REPORT FILED</p>
+        <div class="crash-stamp">MOSTLY<br>FEATHERS</div>
+        <h2 id="crashTitle">Gravity Has Submitted Feedback</h2>
+        <p id="crashText">The hat survived. Your professional reputation did not.</p>
+        <div class="stats">
+          <div><strong id="crashAltitude">0m</strong><span>altitude</span></div>
+          <div><strong id="crashScore">0</strong><span>civic duty</span></div>
+          <div><strong id="crashDeflects">0</strong><span>things yelled at</span></div>
+        </div>
+        <button id="retryButton" class="primary-button">RETRY CHECKPOINT</button>
+        <button id="crashTitleButton" class="secondary-button">BACK TO TITLE</button>
+      </div>
+    </section>
+
+    <section id="finalOverlay" class="overlay final-overlay hidden" role="dialog" aria-modal="true">
+      <div class="panel final-panel">
+        <p class="eyebrow">CITY HALL INCIDENT RESOLVED</p>
+        <div class="final-hat">MAYOR</div>
+        <h2>THE HAT IS HOME.<br><em>THE PIGEON IS PROMOTED.</em></h2>
+        <p>The Mayor awards you the Golden Breadcrumb for “services to wind, hats, and deeply questionable aviation.”</p>
+        <div class="stats">
+          <div><strong id="finalScore">0</strong><span>civic duty</span></div>
+          <div><strong id="finalDeflects">0</strong><span>junk blasted</span></div>
+          <div><strong id="finalTime">0:00</strong><span>flight time</span></div>
+        </div>
+        <p id="rankLine" class="rank-line">RANK: LICENSE-ADJACENT</p>
+        <button id="replayButton" class="primary-button">FLY THE BAD IDEA AGAIN</button>
+        <button id="finalTitleButton" class="secondary-button">BACK TO TITLE</button>
+      </div>
+    </section>
+
+    <section id="settingsOverlay" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="panel pause-panel">
+        <p class="eyebrow">HANGAR SETTINGS</p>
+        <h2>Fine-Tune the Nonsense</h2>
+        <label class="range-label" for="titleVolumeSlider">Volume <output id="titleVolumeOutput">75%</output></label>
+        <input id="titleVolumeSlider" type="range" min="0" max="100" value="75">
+        <label class="toggle"><span>Gentle camera motion</span><input id="titleMotionToggle" type="checkbox"></label>
+        <button id="closeSettingsButton" class="primary-button">DONE</button>
+      </div>
+    </section>
+
+    <div id="rotateOverlay" class="rotate-overlay hidden">
+      <div class="phone-icon">↻</div>
+      <h2>ROTATE TO PORTRAIT</h2>
+      <p>The pigeon requires a suspiciously tall runway.</p>
+    </div>
+  </main>
+  <script src="game.js?v=20260829d"></script>
+</body>
+</html>
