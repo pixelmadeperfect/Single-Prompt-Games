@@ -59,33 +59,6 @@ button { border: 0; color: inherit; cursor: pointer; touch-action: manipulation;
   touch-action: none;
 }
 canvas { width: 100%; height: 100%; display: block; touch-action: none; }
-.kofi-banner {
-  position: absolute;
-  z-index: 35;
-  top: calc(9px + var(--safe-t));
-  left: 50%;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 38px;
-  padding: 7px 16px;
-  transform: translateX(-50%);
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-  color: var(--ink);
-  background: linear-gradient(115deg, var(--yellow), #ffdc73);
-  box-shadow: 0 4px 0 var(--ink), 0 8px 22px #09081466;
-  font-size: clamp(9px, 1.2vw, 12px);
-  font-weight: 1000;
-  letter-spacing: .075em;
-  text-decoration: none;
-  white-space: nowrap;
-  touch-action: manipulation;
-  transition: transform .12s, filter .12s, box-shadow .12s;
-}
-.kofi-banner span { font-size: 16px; line-height: 1; }
-.kofi-banner:hover { filter: brightness(1.08); }
-.kofi-banner:active { transform: translate(-50%, 3px); box-shadow: 0 1px 0 var(--ink), 0 4px 12px #09081466; }
 
 .hud {
   position: absolute;
@@ -296,9 +269,6 @@ input[type="range"] { width: min(100%, 330px); accent-color: var(--yellow); }
 
 @media (orientation: portrait) and (max-width: 900px) { .rotate-overlay { display: grid; align-content: center; } }
 @media (max-height: 430px) {
-  .kofi-banner { top: calc(5px + var(--safe-t)); right: calc(6px + var(--safe-r)); left: auto; min-height: 32px; padding: 5px 11px; transform: none; font-size: 8px; }
-  .kofi-banner span { font-size: 13px; }
-  .kofi-banner:active { transform: translateY(3px); }
   .hud { top: max(3px, min(var(--safe-t), 7px)); left: max(4px, min(var(--safe-l), 8px)); right: max(4px, min(var(--safe-r), 8px)); grid-template-columns: 104px 150px 110px; justify-content: space-between; gap: 4px; }
   .scoreboard { grid-template-columns: 45px 60px 45px; border-radius: 8px; }
   .scoreboard div { padding: 2px 1px; }

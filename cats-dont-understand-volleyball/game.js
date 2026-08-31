@@ -14,7 +14,6 @@
     hud: $('hud'), catScore: $('catScore'), rivalScore: $('rivalScore'), rivalName: $('rivalName'),
     setLabel: $('setLabel'), rallyLabel: $('rallyLabel'), spikeMeter: $('spikeMeter'), zoomiesFill: $('zoomiesFill'), powerState: $('powerState'), activeCatName: $('activeCatName'), callout: $('callout'), hint: $('hint'),
     opponentCheat: $('opponentCheat'), cheatIcon: $('cheatIcon'), cheatTitle: $('cheatTitle'), cheatText: $('cheatText'),
-    kofiBanner: $('kofiBanner'),
     moment: $('matchMoment'), momentEyebrow: $('momentEyebrow'), momentTitle: $('momentTitle'), momentText: $('momentText'),
     title: $('titleOverlay'), chaosSetup: $('chaosSetupOverlay'), brief: $('briefOverlay'), pause: $('pauseOverlay'), results: $('resultsOverlay'), final: $('finalOverlay'),
     settings: $('settingsOverlay'), controls: $('controlsOverlay'), confirm: $('confirmOverlay'), endlessButton: $('endlessButton'), chaosButton: $('chaosButton'), chaosRules: $('chaosRules'), startButton: $('startButton'),
@@ -466,8 +465,8 @@
     audio.init();endless=false;chaotic=true;currentSet=2;elapsedSaved=0;journeyStart=performance.now();state='play';hideAll();ui.hud.classList.remove('hidden');showGameplayControls();ui.chaosRules.classList.remove('hidden');
     resetSet();audio.sting();ui.chaosRules.classList.remove('hidden');callout(`FIRST TO ${MATCH_TARGET} · ${prefs.chaosBalls} BALL${prefs.chaosBalls===1?'':'S'}`);
   }
-  function hideAll() { clearTouchInputs();[ui.title,ui.chaosSetup,ui.brief,ui.pause,ui.results,ui.final,ui.settings,ui.controls,ui.confirm,ui.touchControls].forEach(x=>x.classList.add('hidden')); ui.hud.classList.add('hidden');ui.hint.classList.add('hidden');ui.chaosRules.classList.add('hidden');ui.opponentCheat.classList.add('hidden');ui.kofiBanner.classList.add('hidden');ui.moment.classList.remove('show');ui.moment.setAttribute('aria-hidden','true');momentToken++; }
-  function title() { state='title';endless=false;chaotic=false;hideAll();ui.title.classList.remove('hidden');ui.kofiBanner.classList.remove('hidden');updateTitle();draw(performance.now()/1000); }
+  function hideAll() { clearTouchInputs();[ui.title,ui.chaosSetup,ui.brief,ui.pause,ui.results,ui.final,ui.settings,ui.controls,ui.confirm,ui.touchControls].forEach(x=>x.classList.add('hidden')); ui.hud.classList.add('hidden');ui.hint.classList.add('hidden');ui.chaosRules.classList.add('hidden');ui.opponentCheat.classList.add('hidden');ui.moment.classList.remove('show');ui.moment.setAttribute('aria-hidden','true');momentToken++; }
+  function title() { state='title';endless=false;chaotic=false;hideAll();ui.title.classList.remove('hidden');updateTitle();draw(performance.now()/1000); }
 
   function pounce() {
     if(state!=='play'||serveTimer>0||pointTimer>0||ultraWindup>0)return;
@@ -888,7 +887,7 @@
   document.addEventListener('touchcancel',e=>{if(e.touches.length===0)clearTouchInputs();},{passive:true,capture:true});
   document.addEventListener('dblclick',e=>e.preventDefault(),{capture:true});
   ['gesturestart','gesturechange','gestureend'].forEach(type=>document.addEventListener(type,e=>{if(e.cancelable)e.preventDefault();},{passive:false,capture:true}));
-  window.addEventListener('keydown',e=>{keys.add(e.code);if(['Space','ArrowUp','KeyW'].includes(e.code)){e.preventDefault();audio.init();pounce();}if(['KeyQ','Tab'].includes(e.code)){e.preventDefault();switchCat();}if(e.code==='Escape'&&state==='play')pauseGame();else if(e.code==='Escape'&&!ui.controls.classList.contains('hidden')){ui.controls.classList.add('hidden');ui.title.classList.remove('hidden');ui.kofiBanner.classList.remove('hidden');}else if(e.code==='Escape'&&state==='chaosSetup')title();});
+  window.addEventListener('keydown',e=>{keys.add(e.code);if(['Space','ArrowUp','KeyW'].includes(e.code)){e.preventDefault();audio.init();pounce();}if(['KeyQ','Tab'].includes(e.code)){e.preventDefault();switchCat();}if(e.code==='Escape'&&state==='play')pauseGame();else if(e.code==='Escape'&&!ui.controls.classList.contains('hidden')){ui.controls.classList.add('hidden');ui.title.classList.remove('hidden');}else if(e.code==='Escape'&&state==='chaosSetup')title();});
   window.addEventListener('keyup',e=>keys.delete(e.code));
 
   function click(id,fn){$(id).addEventListener('click',()=>{audio.init();audio.ui();fn();});}
@@ -898,8 +897,8 @@
   click('quitButton',()=>{ui.pause.classList.add('hidden');ui.confirm.classList.remove('hidden');});
   click('cancelQuitButton',()=>{ui.confirm.classList.add('hidden');ui.pause.classList.remove('hidden');});
   click('confirmQuitButton',()=>{saveGame();title();});
-  click('settingsButton',()=>{ui.title.classList.add('hidden');ui.kofiBanner.classList.add('hidden');ui.settings.classList.remove('hidden');});click('closeSettingsButton',()=>{ui.settings.classList.add('hidden');ui.title.classList.remove('hidden');ui.kofiBanner.classList.remove('hidden');});
-  click('controlsButton',()=>{ui.title.classList.add('hidden');ui.kofiBanner.classList.add('hidden');ui.controls.classList.remove('hidden');});click('closeControlsButton',()=>{ui.controls.classList.add('hidden');ui.title.classList.remove('hidden');ui.kofiBanner.classList.remove('hidden');});
+  click('settingsButton',()=>{ui.title.classList.add('hidden');ui.settings.classList.remove('hidden');});click('closeSettingsButton',()=>{ui.settings.classList.add('hidden');ui.title.classList.remove('hidden');});
+  click('controlsButton',()=>{ui.title.classList.add('hidden');ui.controls.classList.remove('hidden');});click('closeControlsButton',()=>{ui.controls.classList.add('hidden');ui.title.classList.remove('hidden');});
   click('muteButton',()=>audio.volume(prefs.volume>0?0:.8));
   function slider(id){$(id).addEventListener('input',e=>audio.volume(Number(e.target.value)/100));}slider('volumeSlider');slider('titleVolumeSlider');
   function motion(id){$(id).addEventListener('change',e=>{prefs.gentle=e.target.checked;savePrefs();});}motion('motionToggle');motion('titleMotionToggle');
