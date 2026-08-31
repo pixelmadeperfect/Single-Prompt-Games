@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#160b10">
+  <title>The Orchestra Is Falling Down the Stairs</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="game-shell" aria-label="The Orchestra Is Falling Down the Stairs">
+    <canvas id="game" width="720" height="1280" aria-label="Game playfield"></canvas>
+
+    <section id="hud" class="hud hidden" aria-live="polite">
+      <div class="hud-card movement"><span>MOVEMENT</span><strong id="hud-movement">I · ALLEGRO</strong></div>
+      <div class="hud-card score"><span>SCORE</span><strong id="hud-score">000000</strong></div>
+      <div class="hud-card ovation"><span>OVATION</span><div id="ovation-pips" aria-label="Three ovation points"><i></i><i></i><i></i></div></div>
+      <div class="movement-progress" aria-label="Movement progress">
+        <div><span id="progress-stage">MOVEMENT 1 OF 5</span><strong id="progress-next">NEXT: MOVEMENT II · 0:42</strong></div>
+        <i><b id="progress-fill"></b></i>
+      </div>
+      <div id="combo" class="combo">CADENZA ×<b>1</b></div>
+      <button id="pause-button" class="icon-button" aria-label="Pause game">Ⅱ</button>
+    </section>
+
+    <section id="title-screen" class="screen title-screen active">
+      <div class="title-copy">
+        <p class="eyebrow">A CATASTROPHE IN FIVE MOVEMENTS</p>
+        <h1><span>The Orchestra Is</span> Falling Down the Stairs</h1>
+        <p class="dek">Conduct the collision. Catch every musician. Turn calamity into a standing ovation.</p>
+        <div class="actions">
+          <button id="start-button" class="primary">RAISE THE BATON</button>
+          <button id="how-button" class="secondary">HOW TO CONDUCT</button>
+        </div>
+        <p id="best-line" class="record">House record: —</p>
+      </div>
+      <div class="conductor-portrait" aria-hidden="true"><img src="assets/conductor.png" alt=""></div>
+      <button id="title-settings" class="corner-button">SOUND &amp; ACCESS</button>
+    </section>
+
+    <section id="how-screen" class="screen modal-screen" aria-labelledby="how-title">
+      <div class="panel how-panel">
+        <p class="eyebrow">ONE BATON. MANY PROBLEMS.</p>
+        <h2 id="how-title">Conduct the collision</h2>
+        <div class="lesson">
+          <div class="gesture-demo"><i class="demo-anchor"></i><i class="demo-baton"></i><i class="demo-note">♪</i></div>
+          <div>
+            <p><strong>Drag anywhere</strong> to aim the conductor’s baton.</p>
+            <p>Meet falling musicians with the glowing length. A fast upward sweep launches them higher; angled catches send them sideways.</p>
+            <p>Strike on the gold pulse for a <strong>Perfect Beat</strong>. Lose three players and the concert collapses.</p>
+            <p>Survive the visible countdown to reach the next of <strong>five movements</strong>. Each cleared movement becomes a safe checkpoint.</p>
+          </div>
+        </div>
+        <button id="how-play" class="primary">I UNDERSTAND MUSIC</button>
+        <button id="how-back" class="text-button">Back</button>
+      </div>
+    </section>
+
+    <section id="continue-screen" class="screen modal-screen" aria-labelledby="continue-title">
+      <div class="panel compact-panel">
+        <p class="eyebrow">THE HOUSE REMEMBERS</p>
+        <h2 id="continue-title">Resume the performance?</h2>
+        <p id="continue-summary"></p>
+        <button id="continue-button" class="primary">CONTINUE</button>
+        <button id="new-button" class="secondary danger">START THIS CONCERT OVER</button>
+      </div>
+    </section>
+
+    <section id="movement-screen" class="screen modal-screen noninteractive" aria-live="assertive">
+      <div class="movement-card">
+        <p id="movement-kicker">MOVEMENT I</p>
+        <h2 id="movement-title">Allegro con Gravity</h2>
+        <p id="movement-brief">The strings have lost their footing.</p>
+      </div>
+    </section>
+
+    <section id="pause-screen" class="screen modal-screen" aria-labelledby="pause-title">
+      <div class="panel compact-panel">
+        <p class="eyebrow">INTERMISSION</p>
+        <h2 id="pause-title">The stairs wait for no one.</h2>
+        <button id="resume-button" class="primary">RESUME</button>
+        <button id="restart-button" class="secondary danger">RESTART MOVEMENT</button>
+        <button id="pause-settings" class="secondary">SOUND &amp; ACCESS</button>
+        <button id="quit-button" class="text-button">Return to title</button>
+      </div>
+    </section>
+
+    <section id="results-screen" class="screen modal-screen" aria-labelledby="results-title">
+      <div class="panel results-panel">
+        <p id="results-kicker" class="eyebrow">THE CURTAIN FALLS</p>
+        <h2 id="results-title">A dignified catastrophe.</h2>
+        <div class="result-grid">
+          <div><span>SCORE</span><strong id="result-score">0</strong></div>
+          <div><span>BEST CADENZA</span><strong id="result-combo">×1</strong></div>
+          <div><span>PERFECT BEATS</span><strong id="result-perfect">0</strong></div>
+          <div><span>RANK</span><strong id="result-rank">C</strong></div>
+        </div>
+        <p id="result-copy"></p>
+        <button id="retry-button" class="primary">ENCORE</button>
+        <button id="result-title-button" class="secondary">RETURN TO FOYER</button>
+      </div>
+    </section>
+
+    <section id="settings-screen" class="screen modal-screen" aria-labelledby="settings-title">
+      <div class="panel settings-panel">
+        <p class="eyebrow">HOUSE CONTROLS</p>
+        <h2 id="settings-title">Sound &amp; access</h2>
+        <label class="setting"><span>Master volume</span><input id="volume" type="range" min="0" max="1" step="0.05" value="0.8"></label>
+        <label class="setting switch"><span>Mute all sound</span><input id="mute" type="checkbox"><i></i></label>
+        <label class="setting switch"><span>Reduced motion</span><input id="reduced-motion" type="checkbox"><i></i></label>
+        <button id="settings-close" class="primary">DONE</button>
+      </div>
+    </section>
+
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
